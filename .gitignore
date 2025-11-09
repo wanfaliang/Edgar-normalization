@@ -1,0 +1,246 @@
+# EDGAR Explorer - Git Ignore File
+# =================================
+
+# ============================================================================
+# SEC DATA - TOO LARGE FOR GIT
+# ============================================================================
+# Ignore all SEC data downloads and processed files (can be 100MB+ per file)
+data/sec_data/
+
+# But keep the directory structure documentation
+!data/sec_data/.gitkeep
+!data/.gitkeep
+
+# ============================================================================
+# SENSITIVE - API KEYS & CREDENTIALS
+# ============================================================================
+# NEVER commit API keys or credentials!
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+secrets.json
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.virtualenv/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+# SQLite databases (can be regenerated from source data)
+*.db
+*.sqlite
+*.sqlite3
+data/sec_data/database/*.db
+
+# PostgreSQL
+*.sql.gz
+
+# ============================================================================
+# LOGS
+# ============================================================================
+# Log files
+*.log
+logs/
+data/sec_data/logs/*.log
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# IDE / EDITOR
+# ============================================================================
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ============================================================================
+# OS
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ============================================================================
+# PROJECT SPECIFIC
+# ============================================================================
+# Large data files (but keep small samples/examples)
+*.zip
+*.tar.gz
+*.parquet
+data/sec_data/downloads/
+data/sec_data/extracted/
+data/sec_data/parquet/
+
+# But keep example/sample files if we create them
+!examples/**/*.zip
+!samples/**/*.parquet
+
+# Backup files
+*.bak
+*.backup
+
+# Output reports (too large or generated)
+data/sec_data/reports/*.xlsx
+data/sec_data/reports/*.pdf
+
+# Cache
+.cache/
+*.cache
+
+# Redis dumps
+dump.rdb
+
+# ============================================================================
+# DOCUMENTATION BUILD
+# ============================================================================
+# Generated documentation
+docs/_build/
+docs/.doctrees/
+
+# ============================================================================
+# KEEP THESE FILES
+# ============================================================================
+# Keep README files everywhere
+!**/README.md
+!**/.gitkeep
+
+# Keep configuration examples (without secrets)
+!.env.example
+!config.example.json
