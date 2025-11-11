@@ -1,0 +1,84 @@
+================================================================================
+RUSSELL 3000 TAG ANALYSIS SUMMARY
+================================================================================
+
+Companies analyzed: 80
+Total unique tags: 2218
+  - Standard tags: 1254
+  - Custom tags: 964
+
+Taxonomy coverage:
+  - Tags in taxonomy: 21 (0.9%)
+  - Tags NOT in taxonomy: 2197 (99.1%)
+
+Standard tag coverage (most important):
+  - In taxonomy: 20 (1.6%)
+  - NOT in taxonomy: 1234 (98.4%)
+
+--------------------------------------------------------------------------------
+TOP 20 MOST COMMON TAGS (ALL COMPANIES)
+--------------------------------------------------------------------------------
+❌ Assets                                             80/80 (100.0%) [STD]
+❌ RetainedEarningsAccumulatedDeficit                 79/80 ( 98.8%) [STD]
+❌ NetCashProvidedByUsedInFinancingActivities         79/80 ( 98.8%) [STD]
+❌ CommonStockValue                                   78/80 ( 97.5%) [STD]
+❌ NetCashProvidedByUsedInOperatingActivities         78/80 ( 97.5%) [STD]
+❌ LiabilitiesAndStockholdersEquity                   77/80 ( 96.2%) [STD]
+❌ CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents 74/80 ( 92.5%) [STD]
+❌ EarningsPerShareBasic                              73/80 ( 91.2%) [STD]
+❌ CommonStockParOrStatedValuePerShare                73/80 ( 91.2%) [STD]
+❌ StockholdersEquity                                 73/80 ( 91.2%) [STD]
+❌ EarningsPerShareDiluted                            72/80 ( 90.0%) [STD]
+✅ NetIncomeLoss                                      71/80 ( 88.8%) [STD]
+❌ CommonStockSharesIssued                            69/80 ( 86.2%) [STD]
+❌ CommonStockSharesOutstanding                       69/80 ( 86.2%) [STD]
+❌ CommitmentsAndContingencies                        68/80 ( 85.0%) [STD]
+❌ CommonStockSharesAuthorized                        67/80 ( 83.8%) [STD]
+❌ Liabilities                                        67/80 ( 83.8%) [STD]
+❌ WeightedAverageNumberOfDilutedSharesOutstanding    65/80 ( 81.2%) [STD]
+❌ WeightedAverageNumberOfSharesOutstandingBasic      65/80 ( 81.2%) [STD]
+❌ CashAndCashEquivalentsAtCarryingValue              64/80 ( 80.0%) [STD]
+
+--------------------------------------------------------------------------------
+TOP 20 STANDARD TAGS NOT IN TAXONOMY (GAPS)
+--------------------------------------------------------------------------------
+❌ Assets                                             80/80 (100.0%)
+   Label: Assets
+❌ RetainedEarningsAccumulatedDeficit                 79/80 ( 98.8%)
+   Label: Accumulated deficit
+❌ NetCashProvidedByUsedInFinancingActivities         79/80 ( 98.8%)
+   Label: Net Cash Provided by (Used in) Financing Activities
+❌ CommonStockValue                                   78/80 ( 97.5%)
+   Label: Common stock, $0.001 par value; 100,000,000 and 50,000,000 shares auth
+❌ NetCashProvidedByUsedInOperatingActivities         78/80 ( 97.5%)
+   Label: Net Cash Provided by (Used in) Operating Activities
+❌ LiabilitiesAndStockholdersEquity                   77/80 ( 96.2%)
+   Label: Liabilities and Equity
+❌ CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents 74/80 ( 92.5%)
+   Label: Cash, Cash Equivalents, Restricted Cash, and Restricted Cash Equivalen
+❌ EarningsPerShareBasic                              73/80 ( 91.2%)
+   Label: Earnings Per Share, Basic
+❌ CommonStockParOrStatedValuePerShare                73/80 ( 91.2%)
+   Label: Common stock, par value
+❌ StockholdersEquity                                 73/80 ( 91.2%)
+   Label: Equity, Attributable to Parent
+❌ EarningsPerShareDiluted                            72/80 ( 90.0%)
+   Label: Earnings Per Share, Diluted
+❌ CommonStockSharesIssued                            69/80 ( 86.2%)
+   Label: Common stock, shares issued
+❌ CommonStockSharesOutstanding                       69/80 ( 86.2%)
+   Label: Common stock, shares outstanding
+❌ CommitmentsAndContingencies                        68/80 ( 85.0%)
+   Label: Commitments and contingencies (Note 14)
+❌ CommonStockSharesAuthorized                        67/80 ( 83.8%)
+   Label: Common stock, shares authorized
+❌ Liabilities                                        67/80 ( 83.8%)
+   Label: Liabilities
+❌ WeightedAverageNumberOfDilutedSharesOutstanding    65/80 ( 81.2%)
+   Label: Weighted Average Number of Shares Outstanding, Diluted
+❌ WeightedAverageNumberOfSharesOutstandingBasic      65/80 ( 81.2%)
+   Label: Weighted Average Number of Shares Outstanding, Basic
+❌ CashAndCashEquivalentsAtCarryingValue              64/80 ( 80.0%)
+   Label: Cash and Cash Equivalents, at Carrying Value
+❌ CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect 62/80 ( 77.5%)
+   Label: Cash, Cash Equivalents, Restricted Cash, and Restricted Cash Equivalen

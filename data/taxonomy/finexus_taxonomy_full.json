@@ -1,0 +1,1062 @@
+{
+  "income_statement": [
+    {
+      "snake_case": "revenue",
+      "camel_case": "Revenue",
+      "sec_variations": [
+        "Revenue"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "cost_of_revenue",
+      "camel_case": "CostOfRevenue",
+      "sec_variations": [
+        "CostOfRevenue"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "gross_profit",
+      "camel_case": "GrossProfit",
+      "sec_variations": [
+        "GrossProfit",
+        "GrossProfitLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "gross_profit_ratio",
+      "camel_case": "GrossProfitRatio",
+      "sec_variations": [
+        "GrossProfitRatio",
+        "GrossProfitLossRatio"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "research_and_development_expenses",
+      "camel_case": "ResearchAndDevelopmentExpenses",
+      "sec_variations": [
+        "ResearchAndDevelopmentExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "general_and_administrative_expenses",
+      "camel_case": "GeneralAndAdministrativeExpenses",
+      "sec_variations": [
+        "GeneralAndAdministrativeExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "selling_and_marketing_expenses",
+      "camel_case": "SellingAndMarketingExpenses",
+      "sec_variations": [
+        "SellingAndMarketingExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "selling_general_and_administrative_expenses",
+      "camel_case": "SellingGeneralAndAdministrativeExpenses",
+      "sec_variations": [
+        "SellingGeneralAndAdministrativeExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "other_expenses",
+      "camel_case": "OtherExpenses",
+      "sec_variations": [
+        "OtherExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "operating_expenses",
+      "camel_case": "OperatingExpenses",
+      "sec_variations": [
+        "OperatingExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "cost_and_expenses",
+      "camel_case": "CostAndExpenses",
+      "sec_variations": [
+        "CostAndExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "interest_income",
+      "camel_case": "InterestIncome",
+      "sec_variations": [
+        "InterestIncome",
+        "InterestIncomeLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "interest_expense",
+      "camel_case": "InterestExpense",
+      "sec_variations": [
+        "InterestExpense",
+        "InterestExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "net_interest_income",
+      "camel_case": "NetInterestIncome",
+      "sec_variations": [
+        "NetInterestIncome",
+        "NetInterestIncomeLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "depreciation_and_amortization",
+      "camel_case": "DepreciationAndAmortization",
+      "sec_variations": [
+        "DepreciationAndAmortization"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "ebitda",
+      "camel_case": "Ebitda",
+      "sec_variations": [
+        "Ebitda"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "ebitda_ratio",
+      "camel_case": "EbitdaRatio",
+      "sec_variations": [
+        "EbitdaRatio"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "ebit",
+      "camel_case": "Ebit",
+      "sec_variations": [
+        "Ebit"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "non_operating_income_excluding_interest",
+      "camel_case": "NonOperatingIncomeExcludingInterest",
+      "sec_variations": [
+        "NonOperatingIncomeExcludingInterest",
+        "NonOperatingIncomeLossExcludingInterest"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "operating_income",
+      "camel_case": "OperatingIncome",
+      "sec_variations": [
+        "OperatingIncome",
+        "OperatingIncomeLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "operating_income_ratio",
+      "camel_case": "OperatingIncomeRatio",
+      "sec_variations": [
+        "OperatingIncomeRatio",
+        "OperatingIncomeLossRatio"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "total_other_income_expenses_net",
+      "camel_case": "TotalOtherIncomeExpensesNet",
+      "sec_variations": [
+        "TotalOtherIncomeExpensesNet",
+        "TotalOtherIncomeLossExpensesNet"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "income_before_tax",
+      "camel_case": "IncomeBeforeTax",
+      "sec_variations": [
+        "IncomeBeforeTax",
+        "IncomeLossBeforeTax"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "income_before_tax_ratio",
+      "camel_case": "IncomeBeforeTaxRatio",
+      "sec_variations": [
+        "IncomeBeforeTaxRatio",
+        "IncomeLossBeforeTaxRatio"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "income_tax_expense",
+      "camel_case": "IncomeTaxExpense",
+      "sec_variations": [
+        "IncomeTaxExpense",
+        "IncomeLossTaxExpense",
+        "IncomeTaxExpenses"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "net_income",
+      "camel_case": "NetIncome",
+      "sec_variations": [
+        "NetIncome",
+        "NetIncomeLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "net_income_ratio",
+      "camel_case": "NetIncomeRatio",
+      "sec_variations": [
+        "NetIncomeRatio",
+        "NetIncomeLossRatio"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "net_income_from_continuing_operations",
+      "camel_case": "NetIncomeFromContinuingOperations",
+      "sec_variations": [
+        "NetIncomeFromContinuingOperations",
+        "NetIncomeLossFromContinuingOperations"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "net_income_from_discontinued_operations",
+      "camel_case": "NetIncomeFromDiscontinuedOperations",
+      "sec_variations": [
+        "NetIncomeFromDiscontinuedOperations",
+        "NetIncomeLossFromDiscontinuedOperations"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "other_adjustments_to_net_income",
+      "camel_case": "OtherAdjustmentsToNetIncome",
+      "sec_variations": [
+        "OtherAdjustmentsToNetIncome",
+        "OtherAdjustmentsToNetIncomeLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "net_income_deductions",
+      "camel_case": "NetIncomeDeductions",
+      "sec_variations": [
+        "NetIncomeDeductions",
+        "NetIncomeLossDeductions"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "bottom_line_net_income",
+      "camel_case": "BottomLineNetIncome",
+      "sec_variations": [
+        "BottomLineNetIncome",
+        "BottomLineNetIncomeLoss"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "eps",
+      "camel_case": "Eps",
+      "sec_variations": [
+        "Eps"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "eps_diluted",
+      "camel_case": "EpsDiluted",
+      "sec_variations": [
+        "EpsDiluted"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "weighted_average_shs_out",
+      "camel_case": "WeightedAverageShsOut",
+      "sec_variations": [
+        "WeightedAverageShsOut"
+      ],
+      "statement": "income_statement"
+    },
+    {
+      "snake_case": "weighted_average_shs_out_dil",
+      "camel_case": "WeightedAverageShsOutDil",
+      "sec_variations": [
+        "WeightedAverageShsOutDil"
+      ],
+      "statement": "income_statement"
+    }
+  ],
+  "balance_sheet": [
+    {
+      "snake_case": "cash_and_cash_equivalents",
+      "camel_case": "CashAndCashEquivalents",
+      "sec_variations": [
+        "CashAndCashEquivalents"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "short_term_investments",
+      "camel_case": "ShortTermInvestments",
+      "sec_variations": [
+        "ShortTermInvestments"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "cash_and_short_term_investments",
+      "camel_case": "CashAndShortTermInvestments",
+      "sec_variations": [
+        "CashAndShortTermInvestments"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "net_receivables",
+      "camel_case": "NetReceivables",
+      "sec_variations": [
+        "NetReceivables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "accounts_receivables",
+      "camel_case": "AccountsReceivables",
+      "sec_variations": [
+        "AccountsReceivables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_receivables",
+      "camel_case": "OtherReceivables",
+      "sec_variations": [
+        "OtherReceivables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "inventory",
+      "camel_case": "Inventory",
+      "sec_variations": [
+        "Inventory"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "prepaids",
+      "camel_case": "Prepaids",
+      "sec_variations": [
+        "Prepaids"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_current_assets",
+      "camel_case": "OtherCurrentAssets",
+      "sec_variations": [
+        "OtherCurrentAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_current_assets",
+      "camel_case": "TotalCurrentAssets",
+      "sec_variations": [
+        "TotalCurrentAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "property_plant_equipment_net",
+      "camel_case": "PropertyPlantEquipmentNet",
+      "sec_variations": [
+        "PropertyPlantEquipmentNet"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "goodwill",
+      "camel_case": "Goodwill",
+      "sec_variations": [
+        "Goodwill"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "intangible_assets",
+      "camel_case": "IntangibleAssets",
+      "sec_variations": [
+        "IntangibleAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "goodwill_and_intangible_assets",
+      "camel_case": "GoodwillAndIntangibleAssets",
+      "sec_variations": [
+        "GoodwillAndIntangibleAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "long_term_investments",
+      "camel_case": "LongTermInvestments",
+      "sec_variations": [
+        "LongTermInvestments"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "tax_assets",
+      "camel_case": "TaxAssets",
+      "sec_variations": [
+        "TaxAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_non_current_assets",
+      "camel_case": "OtherNonCurrentAssets",
+      "sec_variations": [
+        "OtherNonCurrentAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_non_current_assets",
+      "camel_case": "TotalNonCurrentAssets",
+      "sec_variations": [
+        "TotalNonCurrentAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_assets",
+      "camel_case": "OtherAssets",
+      "sec_variations": [
+        "OtherAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_assets",
+      "camel_case": "TotalAssets",
+      "sec_variations": [
+        "TotalAssets"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_payables",
+      "camel_case": "TotalPayables",
+      "sec_variations": [
+        "TotalPayables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "account_payables",
+      "camel_case": "AccountPayables",
+      "sec_variations": [
+        "AccountPayables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_payables",
+      "camel_case": "OtherPayables",
+      "sec_variations": [
+        "OtherPayables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "accrued_expenses",
+      "camel_case": "AccruedExpenses",
+      "sec_variations": [
+        "AccruedExpenses"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "short_term_debt",
+      "camel_case": "ShortTermDebt",
+      "sec_variations": [
+        "ShortTermDebt"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "capital_lease_obligations_current",
+      "camel_case": "CapitalLeaseObligationsCurrent",
+      "sec_variations": [
+        "CapitalLeaseObligationsCurrent"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "capital_lease_obligations_non_current",
+      "camel_case": "CapitalLeaseObligationsNonCurrent",
+      "sec_variations": [
+        "CapitalLeaseObligationsNonCurrent"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "tax_payables",
+      "camel_case": "TaxPayables",
+      "sec_variations": [
+        "TaxPayables"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "deferred_revenue",
+      "camel_case": "DeferredRevenue",
+      "sec_variations": [
+        "DeferredRevenue"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_current_liabilities",
+      "camel_case": "OtherCurrentLiabilities",
+      "sec_variations": [
+        "OtherCurrentLiabilities"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_current_liabilities",
+      "camel_case": "TotalCurrentLiabilities",
+      "sec_variations": [
+        "TotalCurrentLiabilities"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "long_term_debt",
+      "camel_case": "LongTermDebt",
+      "sec_variations": [
+        "LongTermDebt"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "deferred_revenue_non_current",
+      "camel_case": "DeferredRevenueNonCurrent",
+      "sec_variations": [
+        "DeferredRevenueNonCurrent"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "deferred_tax_liabilities_non_current",
+      "camel_case": "DeferredTaxLiabilitiesNonCurrent",
+      "sec_variations": [
+        "DeferredTaxLiabilitiesNonCurrent"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_non_current_liabilities",
+      "camel_case": "OtherNonCurrentLiabilities",
+      "sec_variations": [
+        "OtherNonCurrentLiabilities"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_non_current_liabilities",
+      "camel_case": "TotalNonCurrentLiabilities",
+      "sec_variations": [
+        "TotalNonCurrentLiabilities"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_liabilities",
+      "camel_case": "OtherLiabilities",
+      "sec_variations": [
+        "OtherLiabilities"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "capital_lease_obligations",
+      "camel_case": "CapitalLeaseObligations",
+      "sec_variations": [
+        "CapitalLeaseObligations"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_liabilities",
+      "camel_case": "TotalLiabilities",
+      "sec_variations": [
+        "TotalLiabilities"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "treasury_stock",
+      "camel_case": "TreasuryStock",
+      "sec_variations": [
+        "TreasuryStock"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "preferred_stock",
+      "camel_case": "PreferredStock",
+      "sec_variations": [
+        "PreferredStock"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "common_stock",
+      "camel_case": "CommonStock",
+      "sec_variations": [
+        "CommonStock"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "retained_earnings",
+      "camel_case": "RetainedEarnings",
+      "sec_variations": [
+        "RetainedEarnings"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "additional_paid_in_capital",
+      "camel_case": "AdditionalPaidInCapital",
+      "sec_variations": [
+        "AdditionalPaidInCapital"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "accumulated_other_comprehensive_income_loss",
+      "camel_case": "AccumulatedOtherComprehensiveIncomeLoss",
+      "sec_variations": [
+        "AccumulatedOtherComprehensiveIncomeLoss"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "other_total_stockholders_equity",
+      "camel_case": "OtherTotalStockholdersEquity",
+      "sec_variations": [
+        "OtherTotalStockholdersEquity"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_stockholders_equity",
+      "camel_case": "TotalStockholdersEquity",
+      "sec_variations": [
+        "TotalStockholdersEquity"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_equity",
+      "camel_case": "TotalEquity",
+      "sec_variations": [
+        "TotalEquity"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "minority_interest",
+      "camel_case": "MinorityInterest",
+      "sec_variations": [
+        "MinorityInterest"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_liabilities_and_total_equity",
+      "camel_case": "TotalLiabilitiesAndTotalEquity",
+      "sec_variations": [
+        "TotalLiabilitiesAndTotalEquity"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_investments",
+      "camel_case": "TotalInvestments",
+      "sec_variations": [
+        "TotalInvestments"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "total_debt",
+      "camel_case": "TotalDebt",
+      "sec_variations": [
+        "TotalDebt"
+      ],
+      "statement": "balance_sheet"
+    },
+    {
+      "snake_case": "net_debt",
+      "camel_case": "NetDebt",
+      "sec_variations": [
+        "NetDebt"
+      ],
+      "statement": "balance_sheet"
+    }
+  ],
+  "cash_flow": [
+    {
+      "snake_case": "net_income",
+      "camel_case": "NetIncome",
+      "sec_variations": [
+        "NetIncome",
+        "NetIncomeLoss"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "depreciation_and_amortization",
+      "camel_case": "DepreciationAndAmortization",
+      "sec_variations": [
+        "DepreciationAndAmortization"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "deferred_income_tax",
+      "camel_case": "DeferredIncomeTax",
+      "sec_variations": [
+        "DeferredIncomeTax",
+        "DeferredIncomeLossTax"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "stock_based_compensation",
+      "camel_case": "StockBasedCompensation",
+      "sec_variations": [
+        "StockBasedCompensation"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "change_in_working_capital",
+      "camel_case": "ChangeInWorkingCapital",
+      "sec_variations": [
+        "ChangeInWorkingCapital"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "accounts_receivables",
+      "camel_case": "AccountsReceivables",
+      "sec_variations": [
+        "AccountsReceivables"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "inventory",
+      "camel_case": "Inventory",
+      "sec_variations": [
+        "Inventory"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "accounts_payables",
+      "camel_case": "AccountsPayables",
+      "sec_variations": [
+        "AccountsPayables"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "other_working_capital",
+      "camel_case": "OtherWorkingCapital",
+      "sec_variations": [
+        "OtherWorkingCapital"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "other_non_cash_items",
+      "camel_case": "OtherNonCashItems",
+      "sec_variations": [
+        "OtherNonCashItems"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_cash_provided_by_operating_activities",
+      "camel_case": "NetCashProvidedByOperatingActivities",
+      "sec_variations": [
+        "NetCashProvidedByOperatingActivities"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "investments_in_property_plant_and_equipment",
+      "camel_case": "InvestmentsInPropertyPlantAndEquipment",
+      "sec_variations": [
+        "InvestmentsInPropertyPlantAndEquipment"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "acquisitions_net",
+      "camel_case": "AcquisitionsNet",
+      "sec_variations": [
+        "AcquisitionsNet"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "purchases_of_investments",
+      "camel_case": "PurchasesOfInvestments",
+      "sec_variations": [
+        "PurchasesOfInvestments"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "sales_maturities_of_investments",
+      "camel_case": "SalesMaturitiesOfInvestments",
+      "sec_variations": [
+        "SalesMaturitiesOfInvestments"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "other_investing_activities",
+      "camel_case": "OtherInvestingActivities",
+      "sec_variations": [
+        "OtherInvestingActivities"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_cash_provided_by_investing_activities",
+      "camel_case": "NetCashProvidedByInvestingActivities",
+      "sec_variations": [
+        "NetCashProvidedByInvestingActivities"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_debt_issuance",
+      "camel_case": "NetDebtIssuance",
+      "sec_variations": [
+        "NetDebtIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "long_term_net_debt_issuance",
+      "camel_case": "LongTermNetDebtIssuance",
+      "sec_variations": [
+        "LongTermNetDebtIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "short_term_net_debt_issuance",
+      "camel_case": "ShortTermNetDebtIssuance",
+      "sec_variations": [
+        "ShortTermNetDebtIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_stock_issuance",
+      "camel_case": "NetStockIssuance",
+      "sec_variations": [
+        "NetStockIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_common_stock_issuance",
+      "camel_case": "NetCommonStockIssuance",
+      "sec_variations": [
+        "NetCommonStockIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "common_stock_issuance",
+      "camel_case": "CommonStockIssuance",
+      "sec_variations": [
+        "CommonStockIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "common_stock_repurchased",
+      "camel_case": "CommonStockRepurchased",
+      "sec_variations": [
+        "CommonStockRepurchased"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_preferred_stock_issuance",
+      "camel_case": "NetPreferredStockIssuance",
+      "sec_variations": [
+        "NetPreferredStockIssuance"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_dividends_paid",
+      "camel_case": "NetDividendsPaid",
+      "sec_variations": [
+        "NetDividendsPaid"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "common_dividends_paid",
+      "camel_case": "CommonDividendsPaid",
+      "sec_variations": [
+        "CommonDividendsPaid"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "preferred_dividends_paid",
+      "camel_case": "PreferredDividendsPaid",
+      "sec_variations": [
+        "PreferredDividendsPaid"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "other_financing_activities",
+      "camel_case": "OtherFinancingActivities",
+      "sec_variations": [
+        "OtherFinancingActivities"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_cash_provided_by_financing_activities",
+      "camel_case": "NetCashProvidedByFinancingActivities",
+      "sec_variations": [
+        "NetCashProvidedByFinancingActivities"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "effect_of_forex_changes_on_cash",
+      "camel_case": "EffectOfForexChangesOnCash",
+      "sec_variations": [
+        "EffectOfForexChangesOnCash"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "net_change_in_cash",
+      "camel_case": "NetChangeInCash",
+      "sec_variations": [
+        "NetChangeInCash"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "cash_at_end_of_period",
+      "camel_case": "CashAtEndOfPeriod",
+      "sec_variations": [
+        "CashAtEndOfPeriod"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "cash_at_beginning_of_period",
+      "camel_case": "CashAtBeginningOfPeriod",
+      "sec_variations": [
+        "CashAtBeginningOfPeriod"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "operating_cash_flow",
+      "camel_case": "OperatingCashFlow",
+      "sec_variations": [
+        "OperatingCashFlow"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "capital_expenditure",
+      "camel_case": "CapitalExpenditure",
+      "sec_variations": [
+        "CapitalExpenditure"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "free_cash_flow",
+      "camel_case": "FreeCashFlow",
+      "sec_variations": [
+        "FreeCashFlow"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "income_taxes_paid",
+      "camel_case": "IncomeTaxesPaid",
+      "sec_variations": [
+        "IncomeTaxesPaid",
+        "IncomeLossTaxesPaid"
+      ],
+      "statement": "cash_flow"
+    },
+    {
+      "snake_case": "interest_paid",
+      "camel_case": "InterestPaid",
+      "sec_variations": [
+        "InterestPaid"
+      ],
+      "statement": "cash_flow"
+    }
+  ],
+  "metadata": {
+    "total_concepts": 128,
+    "income_statement_count": 36,
+    "balance_sheet_count": 53,
+    "cash_flow_count": 39,
+    "format_note": "snake_case for database, CamelCase for SEC/API matching"
+  }
+}

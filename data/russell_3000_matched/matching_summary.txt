@@ -1,0 +1,43 @@
+================================================================================
+RUSSELL 3000 MATCHING SUMMARY
+================================================================================
+
+Total Russell 3000 companies: 2572
+Matched to SEC CIK: 2549 (99.1%)
+Available in 2024Q3: 2455 (96.3% of matched)
+
+--------------------------------------------------------------------------------
+STRATIFIED SAMPLE (50 companies)
+--------------------------------------------------------------------------------
+
+By Market Cap Tier:
+  Large-cap (1-200): 20
+  Mid-cap (201-1000): 20
+  Small-cap (1001+): 10
+
+By Sector:
+  Information Technology         8
+  Industrials                    8
+  Financials                     8
+  Health Care                    5
+  Consumer Discretionary         5
+  Communication                  3
+  Energy                         3
+  Materials                      3
+  Real Estate                    3
+  Consumer Staples               2
+  Utilities                      2
+
+--------------------------------------------------------------------------------
+TOP 10 COMPANIES IN SAMPLE
+--------------------------------------------------------------------------------
+  AMZN   AMAZON COM INC                           Consumer Discretionary
+  PLTR   PALANTIR TECHNOLOGIES INC CLASS A        Information Technology
+  HD     HOME DEPOT INC                           Consumer Discretionary
+  PG     PROCTER & GAMBLE                         Consumer Staples
+  LIN    LINDE PLC                                Materials
+  UBER   UBER TECHNOLOGIES INC                    Industrials
+  T      AT&T INC                                 Communication
+  NEE    NEXTERA ENERGY INC                       Utilities
+  GILD   GILEAD SCIENCES INC                      Health Care
+  WELL   WELLTOWER INC                            Real Estate

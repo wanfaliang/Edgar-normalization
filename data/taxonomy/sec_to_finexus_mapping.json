@@ -1,0 +1,608 @@
+{
+  "Revenue": {
+    "field": "revenue",
+    "statement": "income_statement"
+  },
+  "CostOfRevenue": {
+    "field": "cost_of_revenue",
+    "statement": "income_statement"
+  },
+  "GrossProfit": {
+    "field": "gross_profit",
+    "statement": "income_statement"
+  },
+  "GrossProfitLoss": {
+    "field": "gross_profit",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "GrossProfitRatio": {
+    "field": "gross_profit_ratio",
+    "statement": "income_statement"
+  },
+  "GrossProfitLossRatio": {
+    "field": "gross_profit_ratio",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "ResearchAndDevelopmentExpenses": {
+    "field": "research_and_development_expenses",
+    "statement": "income_statement"
+  },
+  "GeneralAndAdministrativeExpenses": {
+    "field": "general_and_administrative_expenses",
+    "statement": "income_statement"
+  },
+  "SellingAndMarketingExpenses": {
+    "field": "selling_and_marketing_expenses",
+    "statement": "income_statement"
+  },
+  "SellingGeneralAndAdministrativeExpenses": {
+    "field": "selling_general_and_administrative_expenses",
+    "statement": "income_statement"
+  },
+  "OtherExpenses": {
+    "field": "other_expenses",
+    "statement": "income_statement"
+  },
+  "OperatingExpenses": {
+    "field": "operating_expenses",
+    "statement": "income_statement"
+  },
+  "CostAndExpenses": {
+    "field": "cost_and_expenses",
+    "statement": "income_statement"
+  },
+  "InterestIncome": {
+    "field": "interest_income",
+    "statement": "income_statement"
+  },
+  "InterestIncomeLoss": {
+    "field": "interest_income",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "InterestExpense": {
+    "field": "interest_expense",
+    "statement": "income_statement"
+  },
+  "InterestExpenses": {
+    "field": "interest_expense",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "NetInterestIncome": {
+    "field": "net_interest_income",
+    "statement": "income_statement"
+  },
+  "NetInterestIncomeLoss": {
+    "field": "net_interest_income",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "DepreciationAndAmortization": {
+    "field": "depreciation_and_amortization",
+    "statement": "cash_flow"
+  },
+  "Ebitda": {
+    "field": "ebitda",
+    "statement": "income_statement"
+  },
+  "EbitdaRatio": {
+    "field": "ebitda_ratio",
+    "statement": "income_statement"
+  },
+  "Ebit": {
+    "field": "ebit",
+    "statement": "income_statement"
+  },
+  "NonOperatingIncomeExcludingInterest": {
+    "field": "non_operating_income_excluding_interest",
+    "statement": "income_statement"
+  },
+  "NonOperatingIncomeLossExcludingInterest": {
+    "field": "non_operating_income_excluding_interest",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "OperatingIncome": {
+    "field": "operating_income",
+    "statement": "income_statement"
+  },
+  "OperatingIncomeLoss": {
+    "field": "operating_income",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "OperatingIncomeRatio": {
+    "field": "operating_income_ratio",
+    "statement": "income_statement"
+  },
+  "OperatingIncomeLossRatio": {
+    "field": "operating_income_ratio",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "TotalOtherIncomeExpensesNet": {
+    "field": "total_other_income_expenses_net",
+    "statement": "income_statement"
+  },
+  "TotalOtherIncomeLossExpensesNet": {
+    "field": "total_other_income_expenses_net",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "IncomeBeforeTax": {
+    "field": "income_before_tax",
+    "statement": "income_statement"
+  },
+  "IncomeLossBeforeTax": {
+    "field": "income_before_tax",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "IncomeBeforeTaxRatio": {
+    "field": "income_before_tax_ratio",
+    "statement": "income_statement"
+  },
+  "IncomeLossBeforeTaxRatio": {
+    "field": "income_before_tax_ratio",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "IncomeTaxExpense": {
+    "field": "income_tax_expense",
+    "statement": "income_statement"
+  },
+  "IncomeLossTaxExpense": {
+    "field": "income_tax_expense",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "IncomeTaxExpenses": {
+    "field": "income_tax_expense",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "NetIncome": {
+    "field": "net_income",
+    "statement": "cash_flow"
+  },
+  "NetIncomeLoss": {
+    "field": "net_income",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "NetIncomeRatio": {
+    "field": "net_income_ratio",
+    "statement": "income_statement"
+  },
+  "NetIncomeLossRatio": {
+    "field": "net_income_ratio",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "NetIncomeFromContinuingOperations": {
+    "field": "net_income_from_continuing_operations",
+    "statement": "income_statement"
+  },
+  "NetIncomeLossFromContinuingOperations": {
+    "field": "net_income_from_continuing_operations",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "NetIncomeFromDiscontinuedOperations": {
+    "field": "net_income_from_discontinued_operations",
+    "statement": "income_statement"
+  },
+  "NetIncomeLossFromDiscontinuedOperations": {
+    "field": "net_income_from_discontinued_operations",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "OtherAdjustmentsToNetIncome": {
+    "field": "other_adjustments_to_net_income",
+    "statement": "income_statement"
+  },
+  "OtherAdjustmentsToNetIncomeLoss": {
+    "field": "other_adjustments_to_net_income",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "NetIncomeDeductions": {
+    "field": "net_income_deductions",
+    "statement": "income_statement"
+  },
+  "NetIncomeLossDeductions": {
+    "field": "net_income_deductions",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "BottomLineNetIncome": {
+    "field": "bottom_line_net_income",
+    "statement": "income_statement"
+  },
+  "BottomLineNetIncomeLoss": {
+    "field": "bottom_line_net_income",
+    "statement": "income_statement",
+    "note": "variation"
+  },
+  "Eps": {
+    "field": "eps",
+    "statement": "income_statement"
+  },
+  "EpsDiluted": {
+    "field": "eps_diluted",
+    "statement": "income_statement"
+  },
+  "WeightedAverageShsOut": {
+    "field": "weighted_average_shs_out",
+    "statement": "income_statement"
+  },
+  "WeightedAverageShsOutDil": {
+    "field": "weighted_average_shs_out_dil",
+    "statement": "income_statement"
+  },
+  "CashAndCashEquivalents": {
+    "field": "cash_and_cash_equivalents",
+    "statement": "balance_sheet"
+  },
+  "ShortTermInvestments": {
+    "field": "short_term_investments",
+    "statement": "balance_sheet"
+  },
+  "CashAndShortTermInvestments": {
+    "field": "cash_and_short_term_investments",
+    "statement": "balance_sheet"
+  },
+  "NetReceivables": {
+    "field": "net_receivables",
+    "statement": "balance_sheet"
+  },
+  "AccountsReceivables": {
+    "field": "accounts_receivables",
+    "statement": "cash_flow"
+  },
+  "OtherReceivables": {
+    "field": "other_receivables",
+    "statement": "balance_sheet"
+  },
+  "Inventory": {
+    "field": "inventory",
+    "statement": "cash_flow"
+  },
+  "Prepaids": {
+    "field": "prepaids",
+    "statement": "balance_sheet"
+  },
+  "OtherCurrentAssets": {
+    "field": "other_current_assets",
+    "statement": "balance_sheet"
+  },
+  "TotalCurrentAssets": {
+    "field": "total_current_assets",
+    "statement": "balance_sheet"
+  },
+  "PropertyPlantEquipmentNet": {
+    "field": "property_plant_equipment_net",
+    "statement": "balance_sheet"
+  },
+  "Goodwill": {
+    "field": "goodwill",
+    "statement": "balance_sheet"
+  },
+  "IntangibleAssets": {
+    "field": "intangible_assets",
+    "statement": "balance_sheet"
+  },
+  "GoodwillAndIntangibleAssets": {
+    "field": "goodwill_and_intangible_assets",
+    "statement": "balance_sheet"
+  },
+  "LongTermInvestments": {
+    "field": "long_term_investments",
+    "statement": "balance_sheet"
+  },
+  "TaxAssets": {
+    "field": "tax_assets",
+    "statement": "balance_sheet"
+  },
+  "OtherNonCurrentAssets": {
+    "field": "other_non_current_assets",
+    "statement": "balance_sheet"
+  },
+  "TotalNonCurrentAssets": {
+    "field": "total_non_current_assets",
+    "statement": "balance_sheet"
+  },
+  "OtherAssets": {
+    "field": "other_assets",
+    "statement": "balance_sheet"
+  },
+  "TotalAssets": {
+    "field": "total_assets",
+    "statement": "balance_sheet"
+  },
+  "TotalPayables": {
+    "field": "total_payables",
+    "statement": "balance_sheet"
+  },
+  "AccountPayables": {
+    "field": "account_payables",
+    "statement": "balance_sheet"
+  },
+  "OtherPayables": {
+    "field": "other_payables",
+    "statement": "balance_sheet"
+  },
+  "AccruedExpenses": {
+    "field": "accrued_expenses",
+    "statement": "balance_sheet"
+  },
+  "ShortTermDebt": {
+    "field": "short_term_debt",
+    "statement": "balance_sheet"
+  },
+  "CapitalLeaseObligationsCurrent": {
+    "field": "capital_lease_obligations_current",
+    "statement": "balance_sheet"
+  },
+  "CapitalLeaseObligationsNonCurrent": {
+    "field": "capital_lease_obligations_non_current",
+    "statement": "balance_sheet"
+  },
+  "TaxPayables": {
+    "field": "tax_payables",
+    "statement": "balance_sheet"
+  },
+  "DeferredRevenue": {
+    "field": "deferred_revenue",
+    "statement": "balance_sheet"
+  },
+  "OtherCurrentLiabilities": {
+    "field": "other_current_liabilities",
+    "statement": "balance_sheet"
+  },
+  "TotalCurrentLiabilities": {
+    "field": "total_current_liabilities",
+    "statement": "balance_sheet"
+  },
+  "LongTermDebt": {
+    "field": "long_term_debt",
+    "statement": "balance_sheet"
+  },
+  "DeferredRevenueNonCurrent": {
+    "field": "deferred_revenue_non_current",
+    "statement": "balance_sheet"
+  },
+  "DeferredTaxLiabilitiesNonCurrent": {
+    "field": "deferred_tax_liabilities_non_current",
+    "statement": "balance_sheet"
+  },
+  "OtherNonCurrentLiabilities": {
+    "field": "other_non_current_liabilities",
+    "statement": "balance_sheet"
+  },
+  "TotalNonCurrentLiabilities": {
+    "field": "total_non_current_liabilities",
+    "statement": "balance_sheet"
+  },
+  "OtherLiabilities": {
+    "field": "other_liabilities",
+    "statement": "balance_sheet"
+  },
+  "CapitalLeaseObligations": {
+    "field": "capital_lease_obligations",
+    "statement": "balance_sheet"
+  },
+  "TotalLiabilities": {
+    "field": "total_liabilities",
+    "statement": "balance_sheet"
+  },
+  "TreasuryStock": {
+    "field": "treasury_stock",
+    "statement": "balance_sheet"
+  },
+  "PreferredStock": {
+    "field": "preferred_stock",
+    "statement": "balance_sheet"
+  },
+  "CommonStock": {
+    "field": "common_stock",
+    "statement": "balance_sheet"
+  },
+  "RetainedEarnings": {
+    "field": "retained_earnings",
+    "statement": "balance_sheet"
+  },
+  "AdditionalPaidInCapital": {
+    "field": "additional_paid_in_capital",
+    "statement": "balance_sheet"
+  },
+  "AccumulatedOtherComprehensiveIncomeLoss": {
+    "field": "accumulated_other_comprehensive_income_loss",
+    "statement": "balance_sheet"
+  },
+  "OtherTotalStockholdersEquity": {
+    "field": "other_total_stockholders_equity",
+    "statement": "balance_sheet"
+  },
+  "TotalStockholdersEquity": {
+    "field": "total_stockholders_equity",
+    "statement": "balance_sheet"
+  },
+  "TotalEquity": {
+    "field": "total_equity",
+    "statement": "balance_sheet"
+  },
+  "MinorityInterest": {
+    "field": "minority_interest",
+    "statement": "balance_sheet"
+  },
+  "TotalLiabilitiesAndTotalEquity": {
+    "field": "total_liabilities_and_total_equity",
+    "statement": "balance_sheet"
+  },
+  "TotalInvestments": {
+    "field": "total_investments",
+    "statement": "balance_sheet"
+  },
+  "TotalDebt": {
+    "field": "total_debt",
+    "statement": "balance_sheet"
+  },
+  "NetDebt": {
+    "field": "net_debt",
+    "statement": "balance_sheet"
+  },
+  "DeferredIncomeTax": {
+    "field": "deferred_income_tax",
+    "statement": "cash_flow"
+  },
+  "DeferredIncomeLossTax": {
+    "field": "deferred_income_tax",
+    "statement": "cash_flow",
+    "note": "variation"
+  },
+  "StockBasedCompensation": {
+    "field": "stock_based_compensation",
+    "statement": "cash_flow"
+  },
+  "ChangeInWorkingCapital": {
+    "field": "change_in_working_capital",
+    "statement": "cash_flow"
+  },
+  "AccountsPayables": {
+    "field": "accounts_payables",
+    "statement": "cash_flow"
+  },
+  "OtherWorkingCapital": {
+    "field": "other_working_capital",
+    "statement": "cash_flow"
+  },
+  "OtherNonCashItems": {
+    "field": "other_non_cash_items",
+    "statement": "cash_flow"
+  },
+  "NetCashProvidedByOperatingActivities": {
+    "field": "net_cash_provided_by_operating_activities",
+    "statement": "cash_flow"
+  },
+  "InvestmentsInPropertyPlantAndEquipment": {
+    "field": "investments_in_property_plant_and_equipment",
+    "statement": "cash_flow"
+  },
+  "AcquisitionsNet": {
+    "field": "acquisitions_net",
+    "statement": "cash_flow"
+  },
+  "PurchasesOfInvestments": {
+    "field": "purchases_of_investments",
+    "statement": "cash_flow"
+  },
+  "SalesMaturitiesOfInvestments": {
+    "field": "sales_maturities_of_investments",
+    "statement": "cash_flow"
+  },
+  "OtherInvestingActivities": {
+    "field": "other_investing_activities",
+    "statement": "cash_flow"
+  },
+  "NetCashProvidedByInvestingActivities": {
+    "field": "net_cash_provided_by_investing_activities",
+    "statement": "cash_flow"
+  },
+  "NetDebtIssuance": {
+    "field": "net_debt_issuance",
+    "statement": "cash_flow"
+  },
+  "LongTermNetDebtIssuance": {
+    "field": "long_term_net_debt_issuance",
+    "statement": "cash_flow"
+  },
+  "ShortTermNetDebtIssuance": {
+    "field": "short_term_net_debt_issuance",
+    "statement": "cash_flow"
+  },
+  "NetStockIssuance": {
+    "field": "net_stock_issuance",
+    "statement": "cash_flow"
+  },
+  "NetCommonStockIssuance": {
+    "field": "net_common_stock_issuance",
+    "statement": "cash_flow"
+  },
+  "CommonStockIssuance": {
+    "field": "common_stock_issuance",
+    "statement": "cash_flow"
+  },
+  "CommonStockRepurchased": {
+    "field": "common_stock_repurchased",
+    "statement": "cash_flow"
+  },
+  "NetPreferredStockIssuance": {
+    "field": "net_preferred_stock_issuance",
+    "statement": "cash_flow"
+  },
+  "NetDividendsPaid": {
+    "field": "net_dividends_paid",
+    "statement": "cash_flow"
+  },
+  "CommonDividendsPaid": {
+    "field": "common_dividends_paid",
+    "statement": "cash_flow"
+  },
+  "PreferredDividendsPaid": {
+    "field": "preferred_dividends_paid",
+    "statement": "cash_flow"
+  },
+  "OtherFinancingActivities": {
+    "field": "other_financing_activities",
+    "statement": "cash_flow"
+  },
+  "NetCashProvidedByFinancingActivities": {
+    "field": "net_cash_provided_by_financing_activities",
+    "statement": "cash_flow"
+  },
+  "EffectOfForexChangesOnCash": {
+    "field": "effect_of_forex_changes_on_cash",
+    "statement": "cash_flow"
+  },
+  "NetChangeInCash": {
+    "field": "net_change_in_cash",
+    "statement": "cash_flow"
+  },
+  "CashAtEndOfPeriod": {
+    "field": "cash_at_end_of_period",
+    "statement": "cash_flow"
+  },
+  "CashAtBeginningOfPeriod": {
+    "field": "cash_at_beginning_of_period",
+    "statement": "cash_flow"
+  },
+  "OperatingCashFlow": {
+    "field": "operating_cash_flow",
+    "statement": "cash_flow"
+  },
+  "CapitalExpenditure": {
+    "field": "capital_expenditure",
+    "statement": "cash_flow"
+  },
+  "FreeCashFlow": {
+    "field": "free_cash_flow",
+    "statement": "cash_flow"
+  },
+  "IncomeTaxesPaid": {
+    "field": "income_taxes_paid",
+    "statement": "cash_flow"
+  },
+  "IncomeLossTaxesPaid": {
+    "field": "income_taxes_paid",
+    "statement": "cash_flow",
+    "note": "variation"
+  },
+  "InterestPaid": {
+    "field": "interest_paid",
+    "statement": "cash_flow"
+  }
+}
