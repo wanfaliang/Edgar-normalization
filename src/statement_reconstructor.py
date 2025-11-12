@@ -32,16 +32,38 @@ class StatementNode:
     Represents a single line item (e.g., "Cash", "Total Assets") with:
     - Its position in the hierarchy (level, line number)
     - Its value from NUM table
+    - Rich metadata from PRE, NUM, and TAG tables
     - References to parent and children
     """
+    # Core identification
     tag: str                    # XBRL tag name (e.g., 'Assets')
     plabel: str                 # Presentation label (e.g., 'Total assets')
-    level: int                  # Indentation level (0 = root, 1 = child, etc.)
-    line: int                   # Line number in presentation order
+
+    # PRE table fields
+    stmt: str = None            # Statement type (BS, IS, CF, etc.)
+    report: str = None          # Report number
+    line: int = None            # Line number in presentation order
+    level: int = 0              # Indentation level (inpth)
+    negating: bool = False      # If True, subtract from parent
+
+    # NUM table fields
     value: Optional[float] = None
+    ddate: str = None           # Date (e.g., '20240630')
+    qtrs: str = None            # Duration quarters (0, 1, 2, 3, 4)
+    uom: str = None             # Unit of measure (USD, shares, etc.)
+    segments: str = None        # Segment (should be NaN for consolidated)
+    coreg: str = None           # Co-registrant (should be NaN for parent)
+
+    # TAG table fields
+    custom: str = None          # Is custom extension tag (0=standard, 1=custom)
+    tlabel: str = None          # Standard taxonomy label
+    datatype: str = None        # Data type (monetary, shares, etc.)
+    iord: str = None            # Instant or Duration (I/D)
+    crdr: str = None            # Credit or Debit (C/D)
+
+    # Hierarchy
     children: List['StatementNode'] = field(default_factory=list)
     parent: Optional['StatementNode'] = None
-    negating: bool = False      # If True, subtract from parent
 
     def __repr__(self):
         value_str = f"${self.value:,.0f}" if self.value else "None"
@@ -91,15 +113,15 @@ class StatementReconstructor:
 
         return getattr(self, cache_attr)
 
-    def load_filing_data(self, adsh: str) -> Dict[str, pd.DataFrame]:
+    def load_filing_data(self, adsh: str) -> Dict:
         """
-        Load PRE, NUM, TAG data for specific filing
+        Load PRE, NUM, TAG, SUB data for specific filing
 
         Args:
             adsh: Accession number (e.g., '0001018724-24-000130')
 
         Returns:
-            Dict with 'pre', 'num', 'tag' DataFrames filtered to this filing
+            Dict with 'pre', 'num', 'tag' DataFrames and 'sub' metadata Series
         """
         print(f"\nLoading filing data for {adsh}...")
 
@@ -107,18 +129,27 @@ class StatementReconstructor:
         pre_df = self._load_table('pre')
         num_df = self._load_table('num')
         tag_df = self._load_table('tag')
+        sub_df = self._load_table('sub')
 
         # Filter to this filing
         filing_pre = pre_df[pre_df['adsh'] == adsh].copy()
         filing_num = num_df[num_df['adsh'] == adsh].copy()
+        filing_sub = sub_df[sub_df['adsh'] == adsh]
+
+        if len(filing_sub) == 0:
+            raise ValueError(f"Filing {adsh} not found in SUB table")
+
+        filing_sub = filing_sub.iloc[0]  # Get as Series
 
         print(f"  PRE rows: {len(filing_pre):,}")
         print(f"  NUM rows: {len(filing_num):,}")
+        print(f"  Filing: {filing_sub['name']} {filing_sub['form']} FY{filing_sub['fy']} {filing_sub['fp']}")
 
         return {
             'pre': filing_pre,
             'num': filing_num,
-            'tag': tag_df  # Full tag table (doesn't filter by adsh)
+            'tag': tag_df,  # Full tag table (doesn't filter by adsh)
+            'sub': filing_sub  # Submission metadata
         }
 
     def build_hierarchy(self, pre_df: pd.DataFrame, stmt: str = 'BS') -> Optional[StatementNode]:
@@ -153,6 +184,7 @@ class StatementReconstructor:
         # Many filings have multiple "reports" for one statement
         # (e.g., main statement + parenthetical details)
         # Focus on the largest report (usually the main statement)
+        main_report = None
         if 'report' in stmt_df.columns:
             report_counts = stmt_df.groupby('report').size()
             main_report = report_counts.idxmax()
@@ -180,6 +212,8 @@ class StatementReconstructor:
             root = StatementNode(
                 tag=f'{stmt}_ROOT',
                 plabel=f'{stmt} Statement',
+                stmt=stmt,
+                report=main_report,
                 level=-1,
                 line=0
             )
@@ -188,6 +222,8 @@ class StatementReconstructor:
                 node = StatementNode(
                     tag=row['tag'],
                     plabel=row.get('plabel', row['tag']),
+                    stmt=stmt,
+                    report=main_report,
                     level=row['inpth'],
                     line=row['line'],
                     negating=(row['negating'].lower() == 'true'),
@@ -206,6 +242,8 @@ class StatementReconstructor:
             node = StatementNode(
                 tag=row['tag'],
                 plabel=row.get('plabel', row['tag']),
+                stmt=stmt,
+                report=main_report,
                 level=row['inpth'],
                 line=row['line'],
                 negating=(row['negating'].lower() == 'true')
@@ -224,6 +262,8 @@ class StatementReconstructor:
                         root = StatementNode(
                             tag=f'{stmt}_ROOT',
                             plabel=f'{stmt} Statement',
+                            stmt=stmt,
+                            report=main_report,
                             level=-1,
                             line=0
                         )
@@ -253,89 +293,172 @@ class StatementReconstructor:
         return root
 
     def attach_values(self, hierarchy: StatementNode, num_df: pd.DataFrame,
-                     period_focus: str = 'I') -> StatementNode:
+                     tag_df: pd.DataFrame, sub_metadata: pd.Series, stmt_type: str) -> StatementNode:
         """
-        Attach actual values from NUM table to hierarchy
+        Attach actual values from NUM table to hierarchy, along with rich metadata
+        from NUM and TAG tables.
 
-        NUM table contains actual numbers with:
-        - tag: XBRL tag name
-        - value: numeric value
-        - ddate: date (for point-in-time items)
-        - qtrs: period (0 = point-in-time, 1 = quarterly, 4 = annual)
-        - uom: unit of measure (USD, shares, etc.)
-
-        Strategy:
-        - For Balance Sheet (I = Instant): Use most recent point-in-time (qtrs=0)
-        - For Income/Cash Flow (D = Duration): Use quarterly (qtrs=1) or YTD
+        Uses SUB metadata to determine the correct period (ddate, qtrs) for each
+        statement type, ensuring we extract the values that appear on the primary
+        financial statements.
 
         Args:
             hierarchy: Root node of statement tree
             num_df: NUM table filtered to specific filing
-            period_focus: 'I' for instant (BS), 'D' for duration (IS, CF)
+            tag_df: Full TAG table for looking up tag metadata
+            sub_metadata: Series from SUB table with period, fp, fy, etc.
+            stmt_type: Statement type ('BS', 'IS', 'CF', etc.)
 
         Returns:
-            Hierarchy with values attached
+            Hierarchy with values and metadata attached
         """
         print(f"\nAttaching values from NUM table ({len(num_df):,} rows)...")
 
         # Convert value to float
+        num_df = num_df.copy()
         num_df['value'] = pd.to_numeric(num_df['value'], errors='coerce')
 
-        # Build tag->value lookup
-        # For each tag, we may have multiple values (different dimensions, dates)
-        # Strategy: Take the most common/relevant one
+        # Determine correct ddate and qtrs based on SUB metadata and statement type
+        period = sub_metadata['period']  # e.g., '20240630'
+        fp = sub_metadata['fp']          # e.g., 'Q2', 'FY'
 
-        def get_value_for_tag(tag: str) -> Optional[float]:
+        if stmt_type == 'BS':
+            # Balance Sheet: instant/point-in-time at period end
+            target_ddate = period
+            target_qtrs = '0'
+        elif stmt_type in ['IS', 'CI']:
+            # Income Statement: quarterly for 10-Q, annual for 10-K
+            target_ddate = period
+            if fp == 'FY':
+                target_qtrs = '4'  # Annual
+            else:
+                target_qtrs = '1'  # Quarterly (Q1, Q2, Q3)
+        elif stmt_type == 'CF':
+            # Cash Flow: YTD based on quarter for 10-Q, annual for 10-K
+            target_ddate = period
+            if fp == 'Q1':
+                target_qtrs = '1'
+            elif fp == 'Q2':
+                target_qtrs = '2'
+            elif fp == 'Q3':
+                target_qtrs = '3'
+            elif fp == 'FY':
+                target_qtrs = '4'
+            else:
+                target_qtrs = '1'  # Fallback
+        elif stmt_type == 'EQ':
+            # Equity: typically duration for the period
+            target_ddate = period
+            target_qtrs = '1' if fp in ['Q1', 'Q2', 'Q3'] else '4'
+        else:
+            # Unknown statement type - use heuristic
+            target_ddate = period
+            target_qtrs = '0'
+
+        print(f"  Filtering NUM to: ddate={target_ddate}, qtrs={target_qtrs}, segments=NaN, coreg=NaN")
+
+        def get_num_data_for_tag(tag: str) -> Optional[Dict]:
             """
-            Find best value for this tag
+            Find the NUM row for this tag in the primary financial statement
 
-            Strategy to handle dimensional data (segments, axes):
-            1. Filter to most recent date
-            2. Prefer values with no segments (total/consolidated)
-            3. Prefer USD values
-            4. Prefer point-in-time for BS, duration for IS/CF
+            Strategy:
+            1. Filter to exact ddate and qtrs (determined from SUB metadata)
+            2. Filter to consolidated (segments=NaN)
+            3. Filter to parent company (coreg=NaN)
+            4. Prefer USD if multiple UOM
+
+            Returns:
+                Dict with value, ddate, qtrs, uom, segments, coreg
             """
             matches = num_df[num_df['tag'] == tag].copy()
 
             if len(matches) == 0:
                 return None
 
-            # 1. Filter to most recent date
-            if 'ddate' in matches.columns:
-                max_date = matches['ddate'].max()
-                matches = matches[matches['ddate'] == max_date]
+            # 1. Filter to target date and period
+            matches = matches[(matches['ddate'] == target_ddate) &
+                            (matches['qtrs'] == target_qtrs)]
 
-            # 2. Prefer values with no segments (consolidated totals)
-            # Companies report segment breakdowns, but we want the total
+            if len(matches) == 0:
+                return None
+
+            # 2. Filter to consolidated (no segments)
             if 'segments' in matches.columns:
                 no_segments = matches[matches['segments'].isna()]
                 if len(no_segments) > 0:
                     matches = no_segments
 
-            # 3. Prefer USD values
-            if 'uom' in matches.columns:
+            # 3. Filter to parent company (no coregistrant)
+            if 'coreg' in matches.columns:
+                no_coreg = matches[matches['coreg'].isna()]
+                if len(no_coreg) > 0:
+                    matches = no_coreg
+
+            # 4. Prefer USD values
+            if 'uom' in matches.columns and len(matches) > 1:
                 usd_matches = matches[matches['uom'] == 'USD']
                 if len(usd_matches) > 0:
                     matches = usd_matches
 
-            # 4. Filter by period type if possible
-            if 'iord' in matches.columns:
-                period_matches = matches[matches['iord'] == period_focus]
-                if len(period_matches) > 0:
-                    matches = period_matches
-
-            # 5. Prefer qtrs=0 for balance sheet (point-in-time)
-            if period_focus == 'I' and 'qtrs' in matches.columns:
-                qtrs_0 = matches[matches['qtrs'] == '0']
-                if len(qtrs_0) > 0:
-                    matches = qtrs_0
+            if len(matches) == 0:
+                return None
 
             # Take first match after filtering
-            return matches.iloc[0]['value']
+            row = matches.iloc[0]
+            return {
+                'value': row['value'],
+                'ddate': row['ddate'],
+                'qtrs': row['qtrs'],
+                'uom': row.get('uom'),
+                'segments': row.get('segments'),
+                'coreg': row.get('coreg')
+            }
+
+        def get_tag_metadata(tag: str) -> Dict:
+            """
+            Fetch metadata from TAG table
+
+            Returns:
+                Dict with custom, tlabel, datatype, iord, crdr
+            """
+            tag_row = tag_df[tag_df['tag'] == tag]
+            if len(tag_row) == 0:
+                return {
+                    'custom': None,
+                    'tlabel': None,
+                    'datatype': None,
+                    'iord': None,
+                    'crdr': None
+                }
+
+            row = tag_row.iloc[0]
+            return {
+                'custom': row.get('custom'),
+                'tlabel': row.get('tlabel'),
+                'datatype': row.get('datatype'),
+                'iord': row.get('iord'),
+                'crdr': row.get('crdr')
+            }
 
         def attach_recursive(node: StatementNode):
-            """Recursively attach values to tree"""
-            node.value = get_value_for_tag(node.tag)
+            """Recursively attach values and metadata to tree"""
+            # Get NUM data (value, ddate, qtrs, uom, segments, coreg)
+            num_data = get_num_data_for_tag(node.tag)
+            if num_data:
+                node.value = num_data['value']
+                node.ddate = num_data['ddate']
+                node.qtrs = num_data['qtrs']
+                node.uom = num_data['uom']
+                node.segments = num_data['segments']
+                node.coreg = num_data['coreg']
+
+            # Get TAG metadata (custom, tlabel, datatype, iord, crdr)
+            tag_meta = get_tag_metadata(node.tag)
+            node.custom = tag_meta['custom']
+            node.tlabel = tag_meta['tlabel']
+            node.datatype = tag_meta['datatype']
+            node.iord = tag_meta['iord']
+            node.crdr = tag_meta['crdr']
 
             for child in node.children:
                 attach_recursive(child)
@@ -483,36 +606,78 @@ class StatementReconstructor:
                 'metadata': {'cik': cik, 'adsh': adsh, 'stmt_type': stmt_type}
             }
 
-        # Step 3: Attach values
-        period_focus = 'I' if stmt_type == 'BS' else 'D'
-        hierarchy = self.attach_values(hierarchy, filing_data['num'], period_focus)
+        # Step 3: Attach values and metadata
+        hierarchy = self.attach_values(hierarchy, filing_data['num'],
+                                       filing_data['tag'], filing_data['sub'], stmt_type)
 
         # Step 4: Validate
         validation = self.validate_rollups(hierarchy)
 
-        # Step 5: Create flat dict for easy access
-        flat_data = {}
+        # Step 5: Create flat list with full metadata for each line item
+        line_items = []
 
         def flatten_recursive(node: StatementNode):
+            """Extract all line items with full metadata"""
+            # Skip virtual root nodes
+            if node.tag.endswith('_ROOT'):
+                for child in node.children:
+                    flatten_recursive(child)
+                return
+
+            # Only include nodes with values
             if node.value is not None:
-                flat_data[node.tag] = node.value
+                line_items.append({
+                    # Core identification
+                    'tag': node.tag,
+                    'plabel': node.plabel,
+
+                    # PRE table fields
+                    'stmt': node.stmt,
+                    'report': node.report,
+                    'line': node.line,
+                    'inpth': node.level,
+                    'negating': node.negating,
+
+                    # NUM table fields
+                    'value': node.value,
+                    'ddate': node.ddate,
+                    'qtrs': node.qtrs,
+                    'uom': node.uom,
+                    'segments': node.segments,
+                    'coreg': node.coreg,
+
+                    # TAG table fields
+                    'custom': node.custom,
+                    'tlabel': node.tlabel,
+                    'datatype': node.datatype,
+                    'iord': node.iord,
+                    'crdr': node.crdr
+                })
+
             for child in node.children:
                 flatten_recursive(child)
 
         flatten_recursive(hierarchy)
+
+        # Sort by line number to maintain presentation order
+        line_items.sort(key=lambda x: x['line'] if x['line'] is not None else 0)
+
+        # Also create simple tag->value dict for backward compatibility
+        flat_data = {item['tag']: item['value'] for item in line_items}
 
         # Generate EDGAR viewer URL
         cik_padded = str(cik).zfill(10)
         edgar_url = f"https://www.sec.gov/cgi-bin/viewer?action=view&cik={cik_padded}&accession_number={adsh}&xbrl_type=v"
 
         print(f"\nReconstruction complete!")
-        print(f"  Total line items: {len(flat_data)}")
+        print(f"  Total line items: {len(line_items)}")
         print(f"  EDGAR viewer: {edgar_url}")
 
         return {
             'hierarchy': hierarchy,
             'validation': validation,
-            'flat_data': flat_data,
+            'line_items': line_items,       # NEW: List of dicts with full metadata
+            'flat_data': flat_data,         # KEPT: Simple tag->value dict for backward compatibility
             'metadata': {
                 'cik': cik,
                 'adsh': adsh,
