@@ -30,13 +30,12 @@ class SECConfig:
 @dataclass
 class StorageConfig:
     """Local storage configuration with relative path support"""
-    
+
     def __init__(self):
-        # Get the project root (where the script is run from)
-        self.project_root = Path.cwd()
-        
-        # Or if you want relative to the config.py file location:
-        # self.project_root = Path(__file__).parent
+        # Get the project root (parent of src directory where config.py is located)
+        self.project_root = Path(__file__).resolve().parent.parent
+
+        # This ensures data is always at E:\edgar-explorer\data\ regardless of where script is run from
         
         # Build paths from environment variables or defaults
         self.base_dir = self.project_root / Path(os.getenv('DATA_BASE_DIR', 'data/sec_data'))

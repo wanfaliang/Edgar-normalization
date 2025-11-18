@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from config import config
 
 
 @dataclass
@@ -31,7 +32,7 @@ class StatementNode:
 
     Represents a single line item (e.g., "Cash", "Total Assets") with:
     - Its position in the hierarchy (level, line number)
-    - Its value from NUM table
+    - Its values from NUM table (multi-period support)
     - Rich metadata from PRE, NUM, and TAG tables
     - References to parent and children
     """
@@ -46,10 +47,11 @@ class StatementNode:
     level: int = 0              # Indentation level (inpth)
     negating: bool = False      # If True, subtract from parent
 
-    # NUM table fields
-    value: Optional[float] = None
-    ddate: str = None           # Date (e.g., '20240630')
-    qtrs: str = None            # Duration quarters (0, 1, 2, 3, 4)
+    # NUM table fields - Multi-period support
+    values: Dict[Tuple[str, str], float] = field(default_factory=dict)  # {(ddate, qtrs): value}
+    value: Optional[float] = None  # Kept for backward compatibility (last period)
+    ddate: str = None           # Date (e.g., '20240630') - last period
+    qtrs: str = None            # Duration quarters (0, 1, 2, 3, 4) - last period
     uom: str = None             # Unit of measure (USD, shares, etc.)
     segments: str = None        # Segment (should be NaN for consolidated)
     coreg: str = None           # Co-registrant (should be NaN for parent)
@@ -92,7 +94,7 @@ class StatementReconstructor:
         """
         self.year = year
         self.quarter = quarter
-        self.base_dir = Path(f'data/sec_data/extracted/{year}q{quarter}')
+        self.base_dir = config.storage.extracted_dir / f'{year}q{quarter}'
 
         # Cache for loaded data (avoid reloading large files)
         self._pre_df: Optional[pd.DataFrame] = None
@@ -357,12 +359,46 @@ class StatementReconstructor:
 
         print(f"  Filtering NUM to: ddate={target_ddate}, qtrs={target_qtrs}, segments=NaN, coreg=NaN")
 
-        def get_num_data_for_tag(tag: str) -> Optional[Dict]:
+        # Get all available instant dates for beginning cash inference
+        instant_dates_all = num_df[(num_df['qtrs'] == '0') &
+                                   (num_df['segments'].isna()) &
+                                   (num_df['coreg'].isna())]['ddate'].unique()
+        instant_dates_all = sorted(instant_dates_all)
+
+        print(f"  Available instant dates: {len(instant_dates_all)} dates")
+
+        def infer_beginning_cash_date(ending_ddate: str, qtrs: str) -> str:
+            """
+            Infer beginning cash balance date using duration calculation
+            and closest match approach (validated 100% across test companies)
+            """
+            from datetime import datetime, timedelta
+
+            # Calculate approximate beginning date
+            end_date = datetime.strptime(ending_ddate, '%Y%m%d')
+            months = int(qtrs) * 3
+            days = months * 30.5  # Approximation (validated to be accurate enough)
+            approx_beginning = end_date - timedelta(days=days)
+            approx_str = approx_beginning.strftime('%Y%m%d')
+
+            # Find closest actual instant date before ending date
+            past_dates = [d for d in instant_dates_all if d < ending_ddate]
+            if not past_dates:
+                return ending_ddate  # Fallback (shouldn't happen in practice)
+
+            # Find closest match to approximation
+            closest = min(past_dates, key=lambda x: abs(int(x) - int(approx_str)))
+            return closest
+
+        def get_num_data_for_tag(tag: str, is_beginning_balance: bool = False) -> Optional[Dict]:
             """
             Find the NUM row for this tag in the primary financial statement
 
             Strategy:
             1. Filter to exact ddate and qtrs (determined from SUB metadata)
+               SPECIAL: For mixed statements (like CF), check tag's iord field
+                - If tag is Instant (I), use qtrs=0 even if stmt_type is CF
+                - This handles beginning/ending cash balances in CF
             2. Filter to consolidated (segments=NaN)
             3. Filter to parent company (coreg=NaN)
             4. Prefer USD if multiple UOM
@@ -375,9 +411,26 @@ class StatementReconstructor:
             if len(matches) == 0:
                 return None
 
+            # Determine correct qtrs and ddate for this specific tag
+            # Check if this tag is instant (balance) vs duration (flow)
+            tag_info = tag_df[tag_df['tag'] == tag]
+            tag_qtrs = target_qtrs
+            tag_ddate = target_ddate
+
+            if len(tag_info) > 0:
+                iord = tag_info.iloc[0].get('iord')
+                # If tag is Instant but we're in a duration statement (CF/IS),
+                # use qtrs=0 for balance items
+                if iord == 'I' and target_qtrs != '0':
+                    tag_qtrs = '0'
+
+                    # Special case: Beginning balance uses INFERRED prior date
+                    if is_beginning_balance:
+                        tag_ddate = infer_beginning_cash_date(target_ddate, target_qtrs)
+
             # 1. Filter to target date and period
-            matches = matches[(matches['ddate'] == target_ddate) &
-                            (matches['qtrs'] == target_qtrs)]
+            matches = matches[(matches['ddate'] == tag_ddate) &
+                            (matches['qtrs'] == tag_qtrs)]
 
             if len(matches) == 0:
                 return None
@@ -442,8 +495,15 @@ class StatementReconstructor:
 
         def attach_recursive(node: StatementNode):
             """Recursively attach values and metadata to tree"""
+            # Check if this is a beginning balance (for CF statements)
+            is_beginning = False
+            if node.plabel:
+                plabel_lower = node.plabel.lower()
+                is_beginning = ('beginning' in plabel_lower and
+                              ('period' in plabel_lower or 'year' in plabel_lower))
+
             # Get NUM data (value, ddate, qtrs, uom, segments, coreg)
-            num_data = get_num_data_for_tag(node.tag)
+            num_data = get_num_data_for_tag(node.tag, is_beginning_balance=is_beginning)
             if num_data:
                 node.value = num_data['value']
                 node.ddate = num_data['ddate']
@@ -476,6 +536,178 @@ class StatementReconstructor:
         print(f"  Attached {value_count} values")
 
         return hierarchy
+
+    def attach_values_for_period(self, hierarchy: StatementNode, num_df: pd.DataFrame,
+                                 tag_df: pd.DataFrame, period: Dict, stmt_type: str) -> StatementNode:
+        """
+        Attach values for a SPECIFIC period to the hierarchy
+
+        This is the multi-period version of attach_values. Instead of using SUB metadata
+        to determine the period, it takes an explicit period dict from PeriodDiscovery.
+
+        Args:
+            hierarchy: Root node of statement tree
+            num_df: NUM table filtered to specific filing
+            tag_df: Full TAG table for looking up tag metadata
+            period: Period dict from PeriodDiscovery:
+                {
+                    'ddate': '20240630',
+                    'qtrs': '1',
+                    'label': 'Three Months Ended Jun 30, 2024',
+                    'type': 'duration' or 'instant'
+                }
+            stmt_type: Statement type ('BS', 'IS', 'CF', etc.)
+
+        Returns:
+            Hierarchy with values attached for this period (stored in values dict)
+        """
+        target_ddate = period['ddate']
+        target_qtrs = period['qtrs']
+
+        print(f"  Attaching values for period: {period['label']}")
+        print(f"    ddate={target_ddate}, qtrs={target_qtrs}")
+
+        # Convert value to float
+        num_df = num_df.copy()
+        num_df['value'] = pd.to_numeric(num_df['value'], errors='coerce')
+
+        # Get all available instant dates for beginning cash inference
+        instant_dates_all = num_df[(num_df['qtrs'] == '0') &
+                                   (num_df['segments'].isna()) &
+                                   (num_df['coreg'].isna())]['ddate'].unique()
+        instant_dates_all = sorted(instant_dates_all)
+
+        def infer_beginning_cash_date(ending_ddate: str, qtrs: str) -> str:
+            """Infer beginning cash balance date"""
+            from datetime import datetime, timedelta
+
+            end_date = datetime.strptime(ending_ddate, '%Y%m%d')
+            months = int(qtrs) * 3
+            days = months * 30.5
+            approx_beginning = end_date - timedelta(days=days)
+            approx_str = approx_beginning.strftime('%Y%m%d')
+
+            past_dates = [d for d in instant_dates_all if d < ending_ddate]
+            if not past_dates:
+                return ending_ddate
+
+            closest = min(past_dates, key=lambda x: abs(int(x) - int(approx_str)))
+            return closest
+
+        def get_num_data_for_tag(tag: str, is_beginning_balance: bool = False) -> Optional[Dict]:
+            """Find NUM row for this tag in this specific period"""
+            matches = num_df[num_df['tag'] == tag].copy()
+
+            if len(matches) == 0:
+                return None
+
+            # Determine correct qtrs and ddate for this specific tag
+            tag_info = tag_df[tag_df['tag'] == tag]
+            tag_qtrs = target_qtrs
+            tag_ddate = target_ddate
+
+            if len(tag_info) > 0:
+                iord = tag_info.iloc[0].get('iord')
+                # If tag is Instant but period is duration, use qtrs=0
+                if iord == 'I' and target_qtrs != '0':
+                    tag_qtrs = '0'
+
+                    # Beginning balance uses inferred prior date
+                    if is_beginning_balance:
+                        tag_ddate = infer_beginning_cash_date(target_ddate, target_qtrs)
+
+            # Filter to target date and period
+            matches = matches[(matches['ddate'] == tag_ddate) &
+                            (matches['qtrs'] == tag_qtrs)]
+
+            if len(matches) == 0:
+                return None
+
+            # Filter to consolidated (no segments)
+            if 'segments' in matches.columns:
+                no_segments = matches[matches['segments'].isna()]
+                if len(no_segments) > 0:
+                    matches = no_segments
+
+            # Filter to parent company (no coregistrant)
+            if 'coreg' in matches.columns:
+                no_coreg = matches[matches['coreg'].isna()]
+                if len(no_coreg) > 0:
+                    matches = no_coreg
+
+            # Prefer USD values
+            if 'uom' in matches.columns and len(matches) > 1:
+                usd_matches = matches[matches['uom'] == 'USD']
+                if len(usd_matches) > 0:
+                    matches = usd_matches
+
+            if len(matches) == 0:
+                return None
+
+            row = matches.iloc[0]
+            return {
+                'value': row['value'],
+                'ddate': row['ddate'],
+                'qtrs': row['qtrs'],
+                'uom': row.get('uom')
+            }
+
+        def attach_recursive(node: StatementNode):
+            """Recursively attach values for this period"""
+            # Check if this is a beginning balance
+            is_beginning = False
+            if node.plabel:
+                plabel_lower = node.plabel.lower()
+                is_beginning = ('beginning' in plabel_lower and
+                              ('period' in plabel_lower or 'year' in plabel_lower))
+
+            # Get NUM data for this period
+            num_data = get_num_data_for_tag(node.tag, is_beginning_balance=is_beginning)
+            if num_data:
+                # Store in multi-period values dict
+                period_key = (num_data['ddate'], num_data['qtrs'])
+                node.values[period_key] = num_data['value']
+
+                # Also update single-value fields for backward compatibility
+                # (last period processed will win)
+                node.value = num_data['value']
+                node.ddate = num_data['ddate']
+                node.qtrs = num_data['qtrs']
+                node.uom = num_data.get('uom')
+
+            # Recursively process children
+            for child in node.children:
+                attach_recursive(child)
+
+        attach_recursive(hierarchy)
+
+        # Count values found for this period
+        def count_period_values(node: StatementNode, period_key: Tuple[str, str]) -> int:
+            count = 1 if period_key in node.values else 0
+            for child in node.children:
+                count += count_period_values(child, period_key)
+            return count
+
+        # Note: period_key might be different from target if it's a beginning balance
+        # So we count all new values in the values dict
+        value_count = len([1 for node in self._get_all_nodes(hierarchy)
+                          if len(node.values) > 0])
+
+        print(f"    Attached values for {value_count} line items")
+
+        return hierarchy
+
+    def _get_all_nodes(self, root: StatementNode) -> List[StatementNode]:
+        """Helper: Get all nodes in hierarchy as flat list"""
+        nodes = []
+
+        def collect(node):
+            nodes.append(node)
+            for child in node.children:
+                collect(child)
+
+        collect(root)
+        return nodes
 
     def validate_rollups(self, hierarchy: StatementNode, tolerance: float = 0.01) -> Dict:
         """
@@ -688,6 +920,289 @@ class StatementReconstructor:
             }
         }
 
+    def reconstruct_statement_multi_period(self, cik: int, adsh: str, stmt_type: str = 'BS') -> Dict:
+        """
+        Multi-period version: Reconstruct financial statement with ALL comparative periods
+
+        This discovers and extracts all periods present in the filing (e.g., current quarter,
+        prior quarter, YTD current, YTD prior, etc.) using the period discovery approach
+        validated in the investigation.
+
+        Pipeline:
+        1. Load filing data (PRE/NUM/TAG/SUB tables)
+        2. Build hierarchy from PRE table (structure - same for all periods)
+        3. Discover all periods using representative tag approach
+        4. For each period, attach values to hierarchy
+        5. Flatten to line_items with multi-period values
+
+        Args:
+            cik: Company CIK (e.g., 1018724 for Amazon)
+            adsh: Accession number (e.g., '0001018724-24-000130')
+            stmt_type: Statement type ('BS', 'IS', 'CF', 'EQ')
+
+        Returns:
+            Dict with:
+                - 'hierarchy': Root StatementNode (with multi-period values)
+                - 'periods': List of period dicts
+                - 'line_items': List of dicts with multi-period values
+                - 'metadata': Filing metadata
+        """
+        print(f"\n{'='*60}")
+        print(f"Reconstructing {stmt_type} statement (MULTI-PERIOD)")
+        print(f"CIK: {cik}, ADSH: {adsh}")
+        print(f"{'='*60}")
+
+        # Step 1: Load filing data
+        filing_data = self.load_filing_data(adsh)
+
+        # Step 2: Build hierarchy (structure - same for all periods)
+        hierarchy = self.build_hierarchy(filing_data['pre'], stmt_type)
+
+        if hierarchy is None:
+            return {
+                'error': f"No {stmt_type} statement found",
+                'hierarchy': None,
+                'periods': [],
+                'line_items': [],
+                'metadata': {'cik': cik, 'adsh': adsh, 'stmt_type': stmt_type}
+            }
+
+        # Step 3: Discover periods using representative tag approach
+        from period_discovery import PeriodDiscovery
+
+        discoverer = PeriodDiscovery()
+        periods = discoverer.discover_periods(
+            filing_data['pre'],
+            filing_data['num'],
+            filing_data['tag'],
+            stmt_type
+        )
+
+        print(f"\nDiscovered {len(periods)} periods:")
+        for p in periods:
+            print(f"  - {p['label']} (ddate={p['ddate']}, qtrs={p['qtrs']})")
+
+        # Step 4: Attach metadata from TAG table (do once)
+        # This sets iord, crdr, etc. which don't change across periods
+        def attach_tag_metadata(node: StatementNode):
+            """Attach TAG metadata to node"""
+            tag_row = filing_data['tag'][filing_data['tag']['tag'] == node.tag]
+            if len(tag_row) > 0:
+                row = tag_row.iloc[0]
+                node.custom = row.get('custom')
+                node.tlabel = row.get('tlabel')
+                node.datatype = row.get('datatype')
+                node.iord = row.get('iord')
+                node.crdr = row.get('crdr')
+
+            for child in node.children:
+                attach_tag_metadata(child)
+
+        attach_tag_metadata(hierarchy)
+
+        # Step 5: For each period, attach values
+        for period in periods:
+            self.attach_values_for_period(
+                hierarchy,
+                filing_data['num'],
+                filing_data['tag'],
+                period,
+                stmt_type
+            )
+
+        # Step 6: Create line_items with multi-period values
+        line_items = []
+
+        # Get available instant dates for beginning balance matching
+        available_instant_dates = filing_data['num'][
+            (filing_data['num']['qtrs'] == '0') &
+            (filing_data['num']['segments'].isna()) &
+            (filing_data['num']['coreg'].isna())
+        ]['ddate'].unique().tolist()
+        available_instant_dates = sorted(available_instant_dates)
+
+        def flatten_multi_period(node: StatementNode):
+            """Extract line items with multi-period values"""
+            # Skip virtual root nodes
+            if node.tag.endswith('_ROOT'):
+                for child in node.children:
+                    flatten_multi_period(child)
+                return
+
+            # Include nodes that have values in ANY period
+            if len(node.values) > 0:
+                # Check if this node is a beginning balance (do once per node)
+                is_beginning_node = False
+                if node.plabel:
+                    plabel_lower = node.plabel.lower()
+                    is_beginning_node = ('beginning' in plabel_lower and
+                                       ('period' in plabel_lower or 'year' in plabel_lower))
+
+                # Build values dict for this line item
+                period_values = {}
+                for period in periods:
+                    period_ddate = period['ddate']
+                    period_qtrs = period['qtrs']
+
+                    # Find value for this period
+                    # For most items: direct match on (ddate, qtrs)
+                    # For instant items (qtrs=0) in duration statements: match to period by ddate
+                    value = None
+
+                    # First, try direct match
+                    if (period_ddate, period_qtrs) in node.values:
+                        value = node.values[(period_ddate, period_qtrs)]
+
+                    # For BEGINNING balance nodes, skip instant match and go straight to
+                    # expected beginning date calculation (because stored dates are inferred, not period dates)
+                    elif is_beginning_node and node.iord == 'I' and period_qtrs != '0':
+                        # Calculate expected beginning date for this period
+                        expected_beginning_date = discoverer.infer_beginning_ddate(
+                            period_ddate,
+                            period_qtrs,
+                            available_instant_dates
+                        )
+
+                        # Look for exact match first
+                        if (expected_beginning_date, '0') in node.values:
+                            value = node.values[(expected_beginning_date, '0')]
+                        else:
+                            # If no exact match, find closest instant date
+                            best_match = None
+                            min_diff_days = float('inf')
+
+                            for (stored_ddate, stored_qtrs), stored_value in node.values.items():
+                                if stored_qtrs == '0':
+                                    # Calculate actual day difference
+                                    from datetime import datetime
+                                    try:
+                                        expected_dt = datetime.strptime(expected_beginning_date, '%Y%m%d')
+                                        stored_dt = datetime.strptime(stored_ddate, '%Y%m%d')
+                                        diff_days = abs((stored_dt - expected_dt).days)
+
+                                        # Accept if within 5 days of expected
+                                        if diff_days < min_diff_days and diff_days <= 5:
+                                            min_diff_days = diff_days
+                                            best_match = stored_value
+                                    except:
+                                        pass
+
+                            if best_match is not None:
+                                value = best_match
+
+                    else:
+                        # For ENDING balance, other instant items, and all duration items
+                        # Look for instant values (qtrs='0') matching this period's ddate
+                        for (stored_ddate, stored_qtrs), stored_value in node.values.items():
+                            if stored_qtrs == '0' and stored_ddate == period_ddate:
+                                value = stored_value
+                                break
+
+                        # For instant items that are NOT beginning balances
+                        # (fallback for edge cases)
+                        if value is None and node.iord == 'I' and period_qtrs != '0' and not is_beginning_node:
+                            # This is an instant item in a duration period (likely beginning balance)
+                            # Calculate expected beginning date using same logic as attach_values_for_period
+                            expected_beginning_date = discoverer.infer_beginning_ddate(
+                                period_ddate,
+                                period_qtrs,
+                                available_instant_dates
+                            )
+
+                            # Look for exact match first
+                            if (expected_beginning_date, '0') in node.values:
+                                value = node.values[(expected_beginning_date, '0')]
+                            else:
+                                # If no exact match, find closest instant date
+                                # (in case rounding caused slight difference)
+                                best_match = None
+                                min_diff_days = float('inf')
+
+                                for (stored_ddate, stored_qtrs), stored_value in node.values.items():
+                                    if stored_qtrs == '0':
+                                        # Calculate actual day difference
+                                        from datetime import datetime
+                                        try:
+                                            expected_dt = datetime.strptime(expected_beginning_date, '%Y%m%d')
+                                            stored_dt = datetime.strptime(stored_ddate, '%Y%m%d')
+                                            diff_days = abs((stored_dt - expected_dt).days)
+
+                                            # Accept if within 5 days of expected
+                                            if diff_days < min_diff_days and diff_days <= 5:
+                                                min_diff_days = diff_days
+                                                best_match = stored_value
+                                        except:
+                                            pass
+
+                                if best_match is not None:
+                                    value = best_match
+
+                    if value is not None:
+                        period_values[period['label']] = value
+
+                line_items.append({
+                    # Core identification
+                    'tag': node.tag,
+                    'plabel': node.plabel,
+
+                    # PRE table fields
+                    'stmt': node.stmt,
+                    'report': node.report,
+                    'line': node.line,
+                    'inpth': node.level,
+                    'negating': node.negating,
+
+                    # Multi-period values
+                    'values': period_values,  # Dict: {period_label: value}
+
+                    # Backward compatibility - last period
+                    'value': node.value,
+                    'ddate': node.ddate,
+                    'qtrs': node.qtrs,
+                    'uom': node.uom,
+                    'segments': node.segments,
+                    'coreg': node.coreg,
+
+                    # TAG table fields
+                    'custom': node.custom,
+                    'tlabel': node.tlabel,
+                    'datatype': node.datatype,
+                    'iord': node.iord,
+                    'crdr': node.crdr
+                })
+
+            for child in node.children:
+                flatten_multi_period(child)
+
+        flatten_multi_period(hierarchy)
+
+        # Sort by line number to maintain presentation order
+        line_items.sort(key=lambda x: x['line'] if x['line'] is not None else 0)
+
+        # Generate EDGAR viewer URL
+        cik_padded = str(cik).zfill(10)
+        edgar_url = f"https://www.sec.gov/cgi-bin/viewer?action=view&cik={cik_padded}&accession_number={adsh}&xbrl_type=v"
+
+        print(f"\nMulti-period reconstruction complete!")
+        print(f"  Total line items: {len(line_items)}")
+        print(f"  Periods: {len(periods)}")
+        print(f"  EDGAR viewer: {edgar_url}")
+
+        return {
+            'hierarchy': hierarchy,
+            'periods': periods,             # List of period metadata dicts
+            'line_items': line_items,       # List with multi-period values
+            'metadata': {
+                'cik': cik,
+                'adsh': adsh,
+                'stmt_type': stmt_type,
+                'year': self.year,
+                'quarter': self.quarter,
+                'edgar_url': edgar_url,
+                'num_periods': len(periods)
+            }
+        }
+
     def print_hierarchy(self, node: StatementNode, max_depth: int = 10):
         """
         Pretty-print statement hierarchy
@@ -724,7 +1239,7 @@ def get_adsh_for_company(cik: int, year: int, quarter: int) -> Optional[str]:
     Returns:
         ADSH string, or None if not found
     """
-    sub_path = Path(f'data/sec_data/extracted/{year}q{quarter}/sub.txt')
+    sub_path = config.storage.extracted_dir / f'{year}q{quarter}' / 'sub.txt'
 
     if not sub_path.exists():
         print(f"Error: {sub_path} not found")

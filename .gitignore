@@ -6,6 +6,9 @@
 # ============================================================================
 # Ignore all SEC data downloads and processed files (can be 100MB+ per file)
 data/sec_data/
+data/sec_datasets/
+output/
+src/data/
 
 # But keep the directory structure documentation
 !data/sec_data/.gitkeep
