@@ -430,60 +430,105 @@ def map_is_item(plabel, line_num, control_lines, datatype=None):
     if line_num == control_lines.get('weighted_average_shares_outstanding_diluted'):
         return 'weighted_average_shares_outstanding_diluted'
 
-    # Revenue
+    # Revenue - CSV line 54
     if 'revenue' in p or 'sales' in p:
         if 'marketing' not in p and 'admini' not in p and 'general' not in p:
             if 'cost' not in p and 'deferred' not in p and 'unearned' not in p:
                 return 'revenue'
 
-    # Cost of revenue
-    if ('cost' in p and ('revenue' in p or 'sales' in p or 'goods sold' in p)) or 'cogs' in p:
+    # Cost of revenue - CSV line 55
+    if ('cost' in p and ('revenue' in p or 'sales' in p or 'sold' in p or 'sale' in p)) or 'cogs' in p:
         return 'cost_of_revenue'
 
-    # Gross profit
+    # Gross profit - CSV line 56
     if 'gross profit' in p or 'gross margin' in p or 'gross income' in p:
         return 'gross_profit'
+
+    # CSV line 63: Cost and expenses
+    if 'total costs and expenses' in p or 'total cost and expenses' in p or 'total operating costs and expenses' in p or 'total operating costs' in p:
+        return 'cost_and_expenses'
 
     section = classify_is_section(line_num, control_lines)
 
     # Operating expenses - match CSV field names
-    if 'research' in p and 'development' in p:
+    # CSV line 57: R&D
+    if 'research' in p or 'development' in p or 'r&d' in p or 'technology' in p:
         return 'research_and_development_expenses'
-    if 'sales' in p and 'marketing' in p:
-        return 'sales_and_marketing_expenses'
-    if 'selling' in p and ('general' in p or 'administrative' in p):
+
+    # CSV line 60: SG&A (combined)
+    if ('sales' in p or 'marketing' in p or 'selling' in p or 'sale' in p or 'advertising' in p or 'promotion' in p) and 'administrative' in p:
         return 'selling_general_and_administrative_expenses'
-    if 'general' in p and 'administrative' in p:
+
+    # CSV line 59: Sales and marketing (not administrative)
+    if ('sales' in p or 'marketing' in p or 'selling' in p or 'sale' in p or 'advertising' in p or 'promotion' in p) and 'administrative' not in p:
+        return 'sales_and_marketing_expenses'
+
+    # CSV line 58: G&A (not selling/marketing)
+    if ('general' in p and 'administrative' in p) and 'selling' not in p and 'marketing' not in p and 'advertising' not in p and 'promotion' not in p and 'sales' not in p:
         return 'general_and_administrative_expenses'
-    if 'operating expense' in p:
+
+    # CSV line 67: Depreciation and amortization (IS version)
+    if 'depreciation' in p or 'amortization' in p:
+        return 'depreciation_and_amortization'
+
+    # CSV line 62: Operating expenses
+    if 'total operating expenses' in p or 'total expenses' in p:
         return 'operating_expenses'
-    if 'other' in p and ('expense' in p or 'income' in p):
+
+    # CSV line 61: Other expenses
+    if 'other' in p and ('expense' in p or 'expenses' in p or 'income' in p):
         return 'other_expenses'
 
-    # Operating income
-    if 'operating income' in p or 'income from operations' in p or 'operating profit' in p:
+    # Operating income - CSV line 69
+    if ('operating' in p or 'operation' in p or 'continuing' in p) and ('income' in p or 'loss' in p or 'profit' in p or 'earnings' in p):
         return 'operating_income'
 
-    # Interest
-    if 'interest expense' in p:
-        return 'interest_expense'
-    if 'interest income' in p:
+    # CSV line 64: Interest income
+    if 'interest' in p and 'income' in p:
         return 'interest_income'
 
-    # Other income/expense - match structure field name
-    if 'other income' in p or 'other expense' in p:
-        return 'other_income_expense'
+    # CSV line 65: Interest expense
+    if ('interest' in p or 'interests' in p) and ('expense' in p or 'expenses' in p):
+        return 'interest_expense'
 
-    # Income before tax
-    if 'income before tax' in p or 'earnings before tax' in p or 'pretax income' in p:
+    # CSV line 66: Net interest income
+    if ('interest' in p or 'interests' in p) and ('expense' in p or 'expenses' in p) and 'income' in p:
+        return 'net_interest_income'
+
+    # CSV line 68: Total other income/expenses net
+    if 'other' in p and ('income' in p or 'gains' in p or 'gain' in p or 'loss' in p or 'losses' in p or 'expenses' in p):
+        return 'total_other_income_expenses_net'
+
+    # CSV line 70: Non-operating income
+    if ('non-operating' in p or 'non-operation' in p or 'discontinued' in p) and ('income' in p or 'loss' in p or 'earnings' in p or 'expenses' in p or 'expense' in p):
+        return 'non_operating_income'
+
+    # Income before tax - CSV line 71
+    if 'pretax' in p or ('before' in p and ('tax' in p or 'taxes' in p)):
         return 'income_before_tax'
 
-    # Income tax expense
-    if ('income tax' in p and 'expense' in p) or 'provision for income tax' in p:
+    # Income tax expense - CSV line 72
+    if ('tax' in p or 'taxes' in p) and ('provision' in p or 'benefit' in p or 'expense' in p or 'expenses' in p):
         return 'income_tax_expense'
 
-    # Net income
-    if 'net income' in p or 'net earnings' in p:
+    # CSV line 73: Net income from continuing operations
+    if ('net income' in p or 'net loss' in p or 'net earnings' in p) and 'continuing' in p:
+        return 'net_income_from_continuing_operations'
+
+    # CSV line 74: Net income from discontinued operations
+    if ('net income' in p or 'net loss' in p or 'net earnings' in p or 'income' in p or 'loss' in p or 'earnings' in p or 'deficit' in p) and 'discontinued' in p:
+        return 'net_income_from_discontinued_operations'
+
+    # CSV line 76: Net income attributed to non-controlling interests
+    if ('net income' in p or 'net loss' in p or 'net earnings' in p or 'net profit' in p) and 'attributable to' in p and ('non-controlling' in p or 'noncontrolling' in p or 'minority' in p):
+        return 'net_income_attributed_to_non_controlling_interests'
+
+    # CSV line 77: Net income attributable to controlling interests
+    if ('net income' in p or 'net loss' in p or 'net earnings' in p or 'net profit' in p) and 'attributable to' in p and 'non-controlling' not in p and 'noncontrolling' not in p and 'minority' not in p:
+        return 'net_income_attributable_to_controlling_interests'
+
+    # CSV line 75: Net income (general)
+    if ('net income' in p or 'net loss' in p or 'net earnings' in p or 'net profit' in p) and 'other' not in p and 'continuing' not in p and 'discontinuing' not in p and 'operating' not in p and 'operation' not in p:
         return 'net_income'
 
     # EPS and Shares - use datatype metadata to distinguish - match CSV field names
@@ -631,75 +676,256 @@ def map_cf_item(plabel, line_num, control_lines, tag=''):
 
     # Apply ALL specific patterns WITHOUT section restrictions
 
-    # Depreciation and amortization
-    if ('depreciation' in p or 'depreciable' in p) and ('amortization' in p or 'amortize' in p):
+    # ========================================================================
+    # OPERATING ACTIVITIES
+    # ========================================================================
+
+    # CSV line 94: Depreciation and amortization (combined)
+    if ('depreciation' in p) and ('amortization' in p):
         return 'depreciation_and_amortization'
 
-    # Stock-based compensation
-    if ('stock' in p or 'share' in p) and 'compensation' in p:
+    # CSV line 95: Depreciation only
+    if 'depreciation' in p and 'amortization' not in p:
+        return 'depreciation'
+
+    # CSV line 96: Amortization only
+    if 'amortization' in p and 'depreciation' not in p:
+        return 'amortization'
+
+    # CSV line 98: Impairments
+    if 'impairment' in p or 'impairments' in p:
+        return 'impairments'
+
+    # CSV line 99: Pension and postretirement
+    if 'pension' in p or 'postretirement' in p:
+        return 'pension_and_postretirement'
+
+    # CSV line 100: Stock-based compensation
+    if ('stock-based' in p or 'stock based' in p or 'share-based' in p or 'share based' in p) and 'compensation' in p:
         return 'stock_based_compensation'
 
-    # Deferred taxes
+    # CSV line 101: Non-operating expense/income
+    if ('non-operating' in p or 'non operating' in p) and ('expense' in p or 'expenses' in p or 'income' in p):
+        return 'non_operating_expense_income'
+    if 'non-cash' in p and 'expenses' in p:
+        return 'non_operating_expense_income'
+
+    # CSV line 102: Investment gains/losses
+    if ('gain' in p or 'gains' in p or 'loss' in p or 'losses' in p) and ('investment' in p or 'investments' in p):
+        return 'investment_gains_losses'
+
+    # CSV line 97: Deferred income tax
     if 'deferred' in p and ('tax' in p or 'taxes' in p):
-        return 'deferred_income_taxes'
+        return 'deferred_income_tax'
 
-    # Working capital changes
+    # CSV line 104: Change in other working capital
+    if 'other working capital' in p or ('other' in p and 'assets' in p):
+        return 'change_in_other_working_capital'
+
+    # CSV line 105: Accounts receivables
     if ('account' in p or 'accounts' in p) and ('receivable' in p or 'receivables' in p):
-        return 'accounts_receivable_change'
-    if 'inventor' in p:
-        return 'inventory_change'
+        return 'accounts_receivables'
+
+    # CSV line 106: Vendor receivables
+    if 'vendor' in p and ('receivable' in p or 'receivables' in p):
+        return 'vendor_receivables'
+
+    # CSV line 107: Inventory
+    if 'inventory' in p or 'inventories' in p:
+        return 'inventory'
+
+    # CSV line 108: Prepaids
+    if 'prepaid' in p or 'prepaids' in p or 'prepayment' in p or 'prepayments' in p:
+        return 'prepaids'
+
+    # CSV line 109: Accounts payables
     if ('account' in p or 'accounts' in p) and ('payable' in p or 'payables' in p):
-        return 'accounts_payable_change'
-    if 'unearned revenue' in p or 'deferred revenue' in p:
-        return 'deferred_revenue_change'
-    if 'income tax' in p and ('payable' in p or 'receivable' in p):
-        return 'income_taxes_payable_change'
+        return 'accounts_payables'
 
-    # Capital expenditures
-    if 'capital expenditure' in p or ('purchase' in p and ('property' in p or 'equipment' in p or 'ppe' in p)):
-        return 'capital_expenditures'
+    # CSV line 110: Accrued expenses
+    if 'accrued' in p:
+        return 'accrued_expenses'
 
-    # Acquisitions
-    if 'acquisition' in p or 'acquire' in p:
-        return 'acquisitions'
+    # CSV line 111: Unearned revenue
+    if 'unearned' in p:
+        return 'unearned_revenue'
 
-    # Investment purchases/sales
-    if 'purchase' in p and 'investment' in p:
+    # CSV line 112: Income taxes payable
+    if 'income taxes' in p and ('payable' in p or 'payables' in p):
+        return 'income_taxes_payable'
+
+    # CSV line 113: Income taxes (not payable, not deferred, not paid)
+    if ('income taxes' in p or 'income tax' in p) and 'payable' not in p and 'deferred' not in p and 'paid' not in p:
+        return 'income_taxes'
+
+    # CSV line 114: Other assets
+    if 'other' in p and 'assets' in p:
+        return 'other_assets'
+
+    # CSV line 115: Other liabilities
+    if 'other' in p and 'liabilities' in p:
+        return 'other_liabilities'
+
+    # ========================================================================
+    # INVESTING ACTIVITIES
+    # ========================================================================
+
+    # CSV line 118: Capital expenditures (investments in PP&E)
+    if ('expenditure' in p or 'expenditures' in p or 'purchase' in p or 'purchases' in p or 'acquisition' in p or 'acquisitions' in p or 'addition' in p or 'additions' in p) and \
+       ('property' in p or 'plant' in p or 'plants' in p or 'equipment' in p or 'equipments' in p or 'ppe' in p):
+        return 'investments_in_property_plant_and_equipment'
+
+    # CSV line 119: Proceeds from sales of PP&E
+    if ('proceeds' in p or 'sale' in p or 'sales' in p or 'disposition' in p) and \
+       ('property' in p or 'plant' in p or 'plants' in p or 'equipment' in p or 'equipments' in p or 'ppe' in p):
+        return 'proceeds_from_sales_of_ppe'
+
+    # CSV line 120: Acquisitions of business
+    if ('business' in p or 'businesses' in p) and ('acquisition' in p or 'acquisitions' in p):
+        return 'acquisitions_of_business_net'
+
+    # CSV line 121: Proceeds from divestiture
+    if ('divestiture' in p or 'sale' in p or 'sales' in p or 'disposition' in p) and ('business' in p or 'businesses' in p):
+        return 'proceeds_from_divestiture'
+
+    # CSV line 122: Other acquisitions and investments
+    if 'other' in p and ('acquisition' in p or 'acquisitions' in p or 'investments' in p):
+        return 'other_aquisitons_and_investments'
+
+    # CSV line 123: Purchases of investments
+    if ('purchase' in p or 'purchases' in p or 'acquisition' in p or 'acquisitions' in p) and ('investment' in p or 'investments' in p or 'securities' in p):
         return 'purchases_of_investments'
-    if 'maturities' in p and 'investment' in p:
-        return 'sales_of_investments'
-    if ('sale' in p or 'sales' in p) and 'investment' in p:
-        return 'sales_of_investments'
 
-    # Dividends
-    if 'dividend' in p:
-        if 'common' in p:
+    # CSV line 124: Sales/maturities of investments
+    if ('sale' in p or 'sales' in p or 'maturity' in p or 'maturities' in p or 'proceeds' in p) and ('investment' in p or 'investments' in p or 'securities' in p):
+        return 'sales_maturities_of_investments'
+
+    # ========================================================================
+    # FINANCING ACTIVITIES
+    # ========================================================================
+
+    # CSV line 127: Short-term debt issuance
+    if 'short-term' in p and ('issuance' in p or 'proceeds' in p):
+        return 'short_term_debt_issuance'
+
+    # CSV line 128: Long-term debt issuance
+    if 'long-term' in p and ('issuance' in p or 'proceeds' in p):
+        return 'long_term_net_debt_issuance'
+
+    # CSV line 129: Short-term debt repayment
+    if 'short-term' in p and ('repayment' in p or 'repayments' in p):
+        return 'short_term_debt_repayment'
+
+    # CSV line 130: Long-term debt repayment
+    if 'long-term' in p and ('repayment' in p or 'repayments' in p):
+        return 'long_term_net_debt_repayment'
+
+    # CSV line 131: Change in short-term debt net
+    if ('change' in p or 'changes' in p) and ('short-term debt' in p or 'short-term' in p):
+        return 'change_in_short_term_debt_net'
+
+    # CSV line 132: Commercial paper net
+    if 'commercial paper' in p:
+        return 'commercial_paper_net'
+
+    # CSV line 133: Change in long-term debt net
+    if ('change' in p or 'changes' in p) and ('long-term debt' in p or 'long-term' in p):
+        return 'change_in_long_term_debt_net'
+
+    # CSV line 134: Term debt issuance (not short/long term specific)
+    if 'debt' in p and ('issuance' in p or 'proceeds' in p) and 'short-term' not in p and 'long-term' not in p:
+        return 'term_debt_issuance'
+
+    # CSV line 135: Term debt repayment (not short/long term specific)
+    if 'debt' in p and ('repayment' in p or 'repayments' in p) and 'short-term' not in p and 'long-term' not in p:
+        return 'term_debt_repayment'
+
+    # CSV line 136: Change in term debt
+    if 'debt' in p and ('change' in p or 'changes' in p) and 'short-term' not in p and 'long-term' not in p:
+        return 'change_in_term_debt'
+
+    # CSV line 137: Finance lease repayment
+    if ('finance lease' in p or 'finance leases' in p) and ('repayment' in p or 'repayments' in p or 'principal' in p):
+        return 'finance_lease_repayment'
+
+    # CSV line 138: Financing obligations repayment
+    if ('financing obligation' in p or 'financing obligations' in p) and ('repayment' in p or 'repayments' in p or 'principal' in p):
+        return 'financing_obligations_repayment'
+
+    # CSV line 139: Net stock issuance
+    if 'net stock issuance' in p:
+        return 'net_stock_issuance'
+
+    # CSV line 140: Net common stock issuance
+    if 'net' in p and ('common stock' in p or 'common stocks' in p) and ('issuance' in p or 'proceeds' in p):
+        return 'net_common_stock_issuance'
+
+    # CSV line 141: Common stock issuance (not net)
+    if ('common stock' in p or 'common stocks' in p or 'shares' in p) and ('issuance' in p or 'issued' in p or 'proceeds' in p) and 'net' not in p:
+        return 'common_stock_issuance'
+
+    # CSV line 142: Taxes on share settlement
+    if ('tax' in p or 'taxes' in p) and ('share' in p or 'shares' in p) and ('settlement' in p or 'vesting' in p):
+        return 'taxes_on_share_settlement'
+
+    # CSV line 143: Net preferred stock issuance
+    if 'net' in p and ('preferred stock' in p or 'preferred stocks' in p) and ('issuance' in p or 'proceeds' in p):
+        return 'net_preferred_stock_issuance'
+
+    # CSV line 144: Preferred stock issuance (not net)
+    if ('preferred stock' in p or 'preferred stocks' in p) and ('issuance' in p or 'proceeds' in p) and 'net' not in p:
+        return 'preferred_stock_issuance'
+
+    # CSV line 145: Common stock repurchased
+    if (('treasury' in p or 'share' in p or 'stock' in p or 'stocks' in p) and ('purchase' in p or 'purchases' in p)) or \
+       ('repurchase' in p or 'repurchases' in p or 'repurchased' in p):
+        return 'common_stock_repurchased'
+
+    # CSV line 146: Proceeds from issuance of stock (special purpose)
+    if (('treasury stock' in p or 'treasury stocks' in p) and ('issuance' in p or 'proceeds' in p)) or \
+       ('proceeds' in p and 'options' in p) or ('proceeds' in p and 'compensation' in p):
+        return 'proceeds_from_issuance_of_stock_sp'
+
+    # CSV line 147-149: Dividends paid
+    if 'dividend' in p or 'dividends' in p:
+        if 'common' in p and 'preferred' not in p:
             return 'common_dividends_paid'
-        elif 'preferred' in p:
+        elif 'preferred' in p and 'common' not in p:
             return 'preferred_dividends_paid'
         else:
             return 'dividends_paid'
 
-    # Stock repurchases
-    if 'repurchase' in p and ('stock' in p or 'shares' in p):
-        return 'common_stock_repurchased'
+    # CSV line 150: Issuance costs
+    if 'issuance costs' in p:
+        return 'issuance_costs'
 
-    # Stock issuance
-    if ('issuance' in p or 'issued' in p) and ('stock' in p or 'shares' in p):
-        return 'net_stock_issuance'
+    # ========================================================================
+    # OTHER ITEMS
+    # ========================================================================
 
-    # Debt proceeds/repayments
-    if ('proceeds' in p or 'issuance' in p) and ('debt' in p or 'borrowing' in p):
-        return 'term_debt_issuance'
-    if 'repayment' in p and 'debt' in p:
-        return 'term_debt_repayment'
+    # CSV line 153: Effect of foreign exchange rate changes
+    if 'exchange' in p or 'foreign currency' in p or 'foreign currencies' in p:
+        return 'effect_of_foreign_exchanges_rate_changes_on_cash'
+
+    # CSV line 154: Net change in cash
+    if ('net change' in p or 'net increase' in p or 'net decrease' in p or 'increase' in p or 'decrease' in p) and 'cash' in p and \
+       'operating' not in p and 'investing' not in p and 'financing' not in p:
+        return 'net_change_in_cash'
+
+    # CSV line 160: Income taxes paid
+    if 'income taxes' in p and ('payment' in p or 'payments' in p or 'paid' in p):
+        return 'income_taxes_paid'
+
+    # CSV line 161: Interest paid
+    if ('payment' in p or 'payments' in p or 'paid' in p) and ('interest' in p or 'interests' in p):
+        return 'interest_paid'
 
     # Section totals
     if 'net cash' in p:
         if 'operating' in p or 'operations' in p:
             return 'net_cash_provided_by_operating_activities'
         elif 'investing' in p:
-            return 'net_cash_used_in_investing_activities'
+            return 'net_cash_provided_by_investing_activities'
         elif 'financing' in p:
             return 'net_cash_provided_by_financing_activities'
 
@@ -709,10 +935,8 @@ def map_cf_item(plabel, line_num, control_lines, tag=''):
         return 'cash_at_beginning_of_period'
     if is_cash_item and ('end' in p or 'close' in p or 'ending' in p):
         return 'cash_at_end_of_period'
-    if 'net change' in p or 'net increase' in p or 'net decrease' in p:
-        return 'net_change_in_cash'
 
-    # ONLY use section for "other" items (no distinctive keywords)
+    # CSV line 116, 125, 151: ONLY use section for "other" items (no distinctive keywords)
     if 'other' in p:
         section = classify_cf_section(line_num, control_lines)
         if section == 'operating':
@@ -886,7 +1110,7 @@ def get_balance_sheet_structure():
 
 
 def get_income_statement_structure():
-    """Define standardized income statement structure"""
+    """Define standardized income statement structure (CSV lines 54-81)"""
     return [
         {'type': 'item', 'field': 'revenue', 'label': 'Revenue'},
         {'type': 'item', 'field': 'cost_of_revenue', 'label': 'Cost of revenue', 'indent': 1},
@@ -897,17 +1121,26 @@ def get_income_statement_structure():
         {'type': 'item', 'field': 'sales_and_marketing_expenses', 'label': 'Sales and marketing', 'indent': 1},
         {'type': 'item', 'field': 'general_and_administrative_expenses', 'label': 'General and administrative', 'indent': 1},
         {'type': 'item', 'field': 'selling_general_and_administrative_expenses', 'label': 'Selling, general and administrative', 'indent': 1},
-        {'type': 'item', 'field': 'operating_expenses', 'label': 'Total operating expenses', 'indent': 1},
+        {'type': 'item', 'field': 'depreciation_and_amortization', 'label': 'Depreciation and amortization', 'indent': 1},
         {'type': 'item', 'field': 'other_expenses', 'label': 'Other expenses', 'indent': 1},
+        {'type': 'item', 'field': 'operating_expenses', 'label': 'Total operating expenses', 'indent': 1},
+        {'type': 'item', 'field': 'cost_and_expenses', 'label': 'Total costs and expenses', 'indent': 1},
         {'type': 'subtotal', 'field': 'operating_income', 'label': 'Operating Income'},
         {'type': 'blank'},
         {'type': 'section_header', 'label': 'Non-Operating Items'},
         {'type': 'item', 'field': 'interest_income', 'label': 'Interest income', 'indent': 1},
         {'type': 'item', 'field': 'interest_expense', 'label': 'Interest expense', 'indent': 1},
-        {'type': 'item', 'field': 'other_income_expense', 'label': 'Other income (expense)', 'indent': 1},
+        {'type': 'item', 'field': 'net_interest_income', 'label': 'Net interest income', 'indent': 1},
+        {'type': 'item', 'field': 'total_other_income_expenses_net', 'label': 'Other income (expense), net', 'indent': 1},
+        {'type': 'item', 'field': 'non_operating_income', 'label': 'Non-operating income', 'indent': 1},
         {'type': 'subtotal', 'field': 'income_before_tax', 'label': 'Income Before Income Taxes'},
         {'type': 'item', 'field': 'income_tax_expense', 'label': 'Income tax expense', 'indent': 1},
+        {'type': 'blank'},
+        {'type': 'item', 'field': 'net_income_from_continuing_operations', 'label': 'Net income from continuing operations'},
+        {'type': 'item', 'field': 'net_income_from_discontinued_operations', 'label': 'Net income from discontinued operations', 'indent': 1},
         {'type': 'total', 'field': 'net_income', 'label': 'Net Income'},
+        {'type': 'item', 'field': 'net_income_attributed_to_non_controlling_interests', 'label': 'Less: Net income attributed to non-controlling interests', 'indent': 1},
+        {'type': 'item', 'field': 'net_income_attributable_to_controlling_interests', 'label': 'Net income attributable to controlling interests'},
         {'type': 'blank'},
         {'type': 'item', 'field': 'eps', 'label': 'Earnings per share - basic'},
         {'type': 'item', 'field': 'eps_diluted', 'label': 'Earnings per share - diluted'},
@@ -917,43 +1150,86 @@ def get_income_statement_structure():
 
 
 def get_cash_flow_structure():
-    """Define standardized cash flow structure"""
+    """Define standardized cash flow structure (CSV lines 93-161)"""
     return [
         {'type': 'major_section', 'label': 'OPERATING ACTIVITIES'},
         {'type': 'item', 'field': 'net_income_starting_line', 'label': 'Net income', 'indent': 1},
         {'type': 'section_header', 'label': 'Adjustments to reconcile net income'},
         {'type': 'item', 'field': 'depreciation_and_amortization', 'label': 'Depreciation and amortization', 'indent': 2},
+        {'type': 'item', 'field': 'depreciation', 'label': 'Depreciation', 'indent': 2},
+        {'type': 'item', 'field': 'amortization', 'label': 'Amortization', 'indent': 2},
         {'type': 'item', 'field': 'stock_based_compensation', 'label': 'Stock-based compensation', 'indent': 2},
-        {'type': 'item', 'field': 'deferred_income_taxes', 'label': 'Deferred income taxes', 'indent': 2},
-        {'type': 'item', 'field': 'other_non_cash_items', 'label': 'Other non-cash items', 'indent': 2},
+        {'type': 'item', 'field': 'deferred_income_tax', 'label': 'Deferred income tax', 'indent': 2},
+        {'type': 'item', 'field': 'impairments', 'label': 'Impairments', 'indent': 2},
+        {'type': 'item', 'field': 'pension_and_postretirement', 'label': 'Pension and postretirement', 'indent': 2},
+        {'type': 'item', 'field': 'non_operating_expense_income', 'label': 'Non-operating expense/income', 'indent': 2},
+        {'type': 'item', 'field': 'investment_gains_losses', 'label': 'Investment gains/losses', 'indent': 2},
         {'type': 'section_header', 'label': 'Changes in operating assets and liabilities'},
-        {'type': 'item', 'field': 'accounts_receivable_change', 'label': 'Accounts receivable', 'indent': 2},
-        {'type': 'item', 'field': 'inventory_change', 'label': 'Inventory', 'indent': 2},
-        {'type': 'item', 'field': 'accounts_payable_change', 'label': 'Accounts payable', 'indent': 2},
-        {'type': 'item', 'field': 'deferred_revenue_change', 'label': 'Deferred revenue', 'indent': 2},
-        {'type': 'item', 'field': 'income_taxes_payable_change', 'label': 'Income taxes payable', 'indent': 2},
+        {'type': 'item', 'field': 'accounts_receivables', 'label': 'Accounts receivables', 'indent': 2},
+        {'type': 'item', 'field': 'vendor_receivables', 'label': 'Vendor receivables', 'indent': 2},
+        {'type': 'item', 'field': 'inventory', 'label': 'Inventory', 'indent': 2},
+        {'type': 'item', 'field': 'prepaids', 'label': 'Prepaids', 'indent': 2},
+        {'type': 'item', 'field': 'accounts_payables', 'label': 'Accounts payables', 'indent': 2},
+        {'type': 'item', 'field': 'accrued_expenses', 'label': 'Accrued expenses', 'indent': 2},
+        {'type': 'item', 'field': 'unearned_revenue', 'label': 'Unearned revenue', 'indent': 2},
+        {'type': 'item', 'field': 'income_taxes_payable', 'label': 'Income taxes payable', 'indent': 2},
+        {'type': 'item', 'field': 'income_taxes', 'label': 'Income taxes', 'indent': 2},
+        {'type': 'item', 'field': 'other_assets', 'label': 'Other assets', 'indent': 2},
+        {'type': 'item', 'field': 'other_liabilities', 'label': 'Other liabilities', 'indent': 2},
+        {'type': 'item', 'field': 'change_in_other_working_capital', 'label': 'Change in other working capital', 'indent': 2},
         {'type': 'item', 'field': 'other_operating_activities', 'label': 'Other operating activities', 'indent': 2},
         {'type': 'subtotal', 'field': 'net_cash_provided_by_operating_activities', 'label': 'Net Cash from Operating Activities'},
         {'type': 'blank'},
         {'type': 'major_section', 'label': 'INVESTING ACTIVITIES'},
-        {'type': 'item', 'field': 'capital_expenditures', 'label': 'Capital expenditures', 'indent': 1},
-        {'type': 'item', 'field': 'acquisitions', 'label': 'Acquisitions', 'indent': 1},
+        {'type': 'item', 'field': 'investments_in_property_plant_and_equipment', 'label': 'Investments in property, plant and equipment', 'indent': 1},
+        {'type': 'item', 'field': 'proceeds_from_sales_of_ppe', 'label': 'Proceeds from sales of PP&E', 'indent': 1},
+        {'type': 'item', 'field': 'acquisitions_of_business_net', 'label': 'Acquisitions of business, net', 'indent': 1},
+        {'type': 'item', 'field': 'proceeds_from_divestiture', 'label': 'Proceeds from divestiture', 'indent': 1},
         {'type': 'item', 'field': 'purchases_of_investments', 'label': 'Purchases of investments', 'indent': 1},
-        {'type': 'item', 'field': 'sales_of_investments', 'label': 'Sales of investments', 'indent': 1},
+        {'type': 'item', 'field': 'sales_maturities_of_investments', 'label': 'Sales/maturities of investments', 'indent': 1},
+        {'type': 'item', 'field': 'other_aquisitons_and_investments', 'label': 'Other acquisitions and investments', 'indent': 1},
         {'type': 'item', 'field': 'other_investing_activities', 'label': 'Other investing activities', 'indent': 1},
-        {'type': 'subtotal', 'field': 'net_cash_used_in_investing_activities', 'label': 'Net Cash from Investing Activities'},
+        {'type': 'subtotal', 'field': 'net_cash_provided_by_investing_activities', 'label': 'Net Cash from Investing Activities'},
         {'type': 'blank'},
         {'type': 'major_section', 'label': 'FINANCING ACTIVITIES'},
-        {'type': 'item', 'field': 'common_dividends_paid', 'label': 'Cash dividends paid', 'indent': 1},
-        {'type': 'item', 'field': 'common_stock_repurchased', 'label': 'Repurchases of common stock', 'indent': 1},
-        {'type': 'item', 'field': 'term_debt_issuance', 'label': 'Proceeds from debt issuance', 'indent': 1},
-        {'type': 'item', 'field': 'term_debt_repayment', 'label': 'Repayments of debt', 'indent': 1},
+        {'type': 'section_header', 'label': 'Debt'},
+        {'type': 'item', 'field': 'short_term_debt_issuance', 'label': 'Short-term debt issuance', 'indent': 2},
+        {'type': 'item', 'field': 'short_term_debt_repayment', 'label': 'Short-term debt repayment', 'indent': 2},
+        {'type': 'item', 'field': 'change_in_short_term_debt_net', 'label': 'Change in short-term debt, net', 'indent': 2},
+        {'type': 'item', 'field': 'long_term_net_debt_issuance', 'label': 'Long-term debt issuance', 'indent': 2},
+        {'type': 'item', 'field': 'long_term_net_debt_repayment', 'label': 'Long-term debt repayment', 'indent': 2},
+        {'type': 'item', 'field': 'change_in_long_term_debt_net', 'label': 'Change in long-term debt, net', 'indent': 2},
+        {'type': 'item', 'field': 'term_debt_issuance', 'label': 'Debt issuance', 'indent': 2},
+        {'type': 'item', 'field': 'term_debt_repayment', 'label': 'Debt repayment', 'indent': 2},
+        {'type': 'item', 'field': 'change_in_term_debt', 'label': 'Change in debt, net', 'indent': 2},
+        {'type': 'item', 'field': 'commercial_paper_net', 'label': 'Commercial paper, net', 'indent': 2},
+        {'type': 'item', 'field': 'finance_lease_repayment', 'label': 'Finance lease repayment', 'indent': 2},
+        {'type': 'item', 'field': 'financing_obligations_repayment', 'label': 'Financing obligations repayment', 'indent': 2},
+        {'type': 'section_header', 'label': 'Equity'},
+        {'type': 'item', 'field': 'net_stock_issuance', 'label': 'Net stock issuance', 'indent': 2},
+        {'type': 'item', 'field': 'net_common_stock_issuance', 'label': 'Net common stock issuance', 'indent': 2},
+        {'type': 'item', 'field': 'common_stock_issuance', 'label': 'Common stock issuance', 'indent': 2},
+        {'type': 'item', 'field': 'common_stock_repurchased', 'label': 'Common stock repurchased', 'indent': 2},
+        {'type': 'item', 'field': 'taxes_on_share_settlement', 'label': 'Taxes on share settlement', 'indent': 2},
+        {'type': 'item', 'field': 'net_preferred_stock_issuance', 'label': 'Net preferred stock issuance', 'indent': 2},
+        {'type': 'item', 'field': 'preferred_stock_issuance', 'label': 'Preferred stock issuance', 'indent': 2},
+        {'type': 'item', 'field': 'proceeds_from_issuance_of_stock_sp', 'label': 'Proceeds from issuance of stock (SP)', 'indent': 2},
+        {'type': 'section_header', 'label': 'Dividends'},
+        {'type': 'item', 'field': 'dividends_paid', 'label': 'Dividends paid', 'indent': 2},
+        {'type': 'item', 'field': 'common_dividends_paid', 'label': 'Common dividends paid', 'indent': 2},
+        {'type': 'item', 'field': 'preferred_dividends_paid', 'label': 'Preferred dividends paid', 'indent': 2},
+        {'type': 'item', 'field': 'issuance_costs', 'label': 'Issuance costs', 'indent': 2},
         {'type': 'item', 'field': 'other_financing_activities', 'label': 'Other financing activities', 'indent': 1},
         {'type': 'subtotal', 'field': 'net_cash_provided_by_financing_activities', 'label': 'Net Cash from Financing Activities'},
         {'type': 'blank'},
+        {'type': 'item', 'field': 'effect_of_foreign_exchanges_rate_changes_on_cash', 'label': 'Effect of foreign exchange rate changes on cash'},
         {'type': 'item', 'field': 'net_change_in_cash', 'label': 'Net Change in Cash'},
         {'type': 'item', 'field': 'cash_at_beginning_of_period', 'label': 'Cash at beginning of period'},
         {'type': 'total', 'field': 'cash_at_end_of_period', 'label': 'Cash at End of Period'},
+        {'type': 'blank'},
+        {'type': 'section_header', 'label': 'Supplemental Disclosures'},
+        {'type': 'item', 'field': 'income_taxes_paid', 'label': 'Income taxes paid', 'indent': 1},
+        {'type': 'item', 'field': 'interest_paid', 'label': 'Interest paid', 'indent': 1},
     ]
 
 
