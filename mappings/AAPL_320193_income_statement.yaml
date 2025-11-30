@@ -1,0 +1,51 @@
+company:
+  cik: '320193'
+  name: APPLE INC
+  ticker: AAPL
+filing:
+  adsh: 0000320193-24-000123
+  dataset: 2024Q4
+statement: income_statement
+mappings:
+  Net sales:
+    target: revenue
+    confidence: 1.0
+  Cost of sales:
+    target: cost_of_revenue
+    confidence: 1.0
+  Gross margin:
+    target: gross_profit
+    confidence: 1.0
+  Research and development:
+    target: research_and_development_expenses
+    confidence: 1.0
+  Selling, general and administrative:
+    target: selling_general_and_administrative_expenses
+    confidence: 1.0
+  Total operating expenses:
+    target: operating_expenses
+    confidence: 1.0
+  Operating income:
+    target: operating_income
+    confidence: 1.0
+  Income before provision for income taxes:
+    target: income_before_tax
+    confidence: 1.0
+  Provision for income taxes:
+    target: income_tax_expense
+    confidence: 1.0
+  Net income:
+    target: net_income
+    confidence: 1.0
+  Basic (in dollars per share):
+    target: eps
+    confidence: 0.95
+  Diluted (in dollars per share):
+    target: eps_diluted
+    confidence: 0.95
+  Basic (in shares):
+    target: weighted_average_shares_outstanding
+    confidence: 0.95
+  Diluted (in shares):
+    target: weighted_average_shares_outstanding_diluted
+    confidence: 0.95

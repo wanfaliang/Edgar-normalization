@@ -325,3 +325,8 @@ Built with:
   # Create scheduled task
   schtasks /create /tn "SEC Dataset Sync" /tr "C:\path\to\venv\Scripts\python.exe C:\path\to\edgar-explorer\src\sync_datasets.py
   --update-tickers" /sc weekly /d MON /st 02:00
+
+  ## Simple CLI
+  python src/export_filing.py --ticker AMZN --form 10-K --year 2024
+
+  python src/export_filing.py --ticker UBER --form 10-Q --year 2024 --quarter 2

@@ -500,4 +500,4 @@ if __name__ == "__main__":
     DATABASE_URL = "postgresql://user:password@localhost:5432/finexus"
     
     engine = create_engine(DATABASE_URL, echo=True)
-    create_all_tables(engine)
+    create_all_tables(engine) # type: ignore

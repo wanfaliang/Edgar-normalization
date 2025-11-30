@@ -1,0 +1,114 @@
+company:
+  cik: '789019'
+  name: MICROSOFT CORP
+  ticker: MSFT
+filing:
+  adsh: 0000950170-24-118967
+  dataset: 2024Q4
+statement: balance_sheet
+mappings:
+  Cash and cash equivalents:
+    target: cash_and_cash_equivalents
+    confidence: 1.0
+  Short-term investments:
+    target: short_term_investments
+    confidence: 1.0
+  Total cash, cash equivalents, and short-term investments:
+    target: cash_and_short_term_investments
+    confidence: 1.0
+  Accounts receivable, net of allowance for doubtful accounts of $647 and $830:
+    target: account_receivables_net
+    confidence: 0.9
+  Inventories:
+    target: inventory
+    confidence: 1.0
+  Other current assets:
+    target: other_current_assets
+    confidence: 1.0
+  Total current assets:
+    target: total_current_assets
+    confidence: 1.0
+  Property and equipment, net of accumulated depreciation of $80,517 and $76,421:
+    target: property_plant_equipment_net
+    confidence: 0.9
+  Operating lease right-of-use assets:
+    target: operating_lease_right_of_use_assets
+    confidence: 1.0
+  Equity and other investments:
+    target: long_term_investments
+    confidence: 1.0
+  Goodwill:
+    target: goodwill
+    confidence: 1.0
+  Intangible assets, net:
+    target: intangible_assets
+    confidence: 1.0
+  Other long-term assets:
+    target: other_non_current_assets
+    confidence: 1.0
+  Total assets:
+    target: total_assets
+    confidence: 1.0
+  Accounts payable:
+    target: account_payables
+    confidence: 1.0
+  Short-term debt:
+    target: short_term_debt
+    confidence: 1.0
+  Current portion of long-term debt:
+    target: current_portion_of_long_term_debt
+    confidence: 1.0
+  Accrued compensation:
+    target: accrued_payroll
+    confidence: 1.0
+  Short-term income taxes:
+    target: tax_payables
+    confidence: 1.0
+  Short-term unearned revenue:
+    target: deferred_revenue
+    confidence: 1.0
+  Other current liabilities:
+    target: other_current_liabilities
+    confidence: 1.0
+  Total current liabilities:
+    target: total_current_liabilities
+    confidence: 1.0
+  Long-term debt:
+    target: long_term_debt
+    confidence: 1.0
+  Long-term income taxes:
+    target: deferred_tax_liabilities_non_current
+    confidence: 1.0
+  Long-term unearned revenue:
+    target: deferred_revenue_non_current
+    confidence: 1.0
+  Deferred income taxes:
+    target: deferred_tax_liabilities_non_current
+    confidence: 1.0
+  Operating lease liabilities:
+    target: operating_lease_liabilities
+    confidence: 1.0
+  Other long-term liabilities:
+    target: other_non_current_liabilities
+    confidence: 1.0
+  Total liabilities:
+    target: total_liabilities
+    confidence: 1.0
+  Commitments and contingencies:
+    target: commitments_and_contingencies
+    confidence: 0.9
+  Common stock and paid-in capital - shares authorized 24,000; outstanding 7,436 and 7,434:
+    target: common_stock
+    confidence: 0.9
+  Retained earnings:
+    target: retained_earnings
+    confidence: 1.0
+  Accumulated other comprehensive loss:
+    target: accumulated_other_comprehensive_income_loss
+    confidence: 1.0
+  Total stockholders equity:
+    target: total_stockholders_equity
+    confidence: 1.0
+  Total liabilities and stockholders equity:
+    target: total_liabilities_and_total_equity
+    confidence: 1.0

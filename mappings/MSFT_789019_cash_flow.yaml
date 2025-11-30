@@ -1,0 +1,125 @@
+company:
+  cik: '789019'
+  name: MICROSOFT CORP
+  ticker: MSFT
+filing:
+  adsh: 0000950170-24-118967
+  dataset: 2024Q4
+statement: cash_flow
+control_items:
+  operating: 18
+  financing: 27
+  investing: 35
+mappings:
+  Net income:
+    target: net_income
+    confidence: 0.9
+    section: operating
+  Depreciation, amortization, and other:
+    target: depreciation_and_amortization
+    confidence: 0.9
+    section: operating
+  Stock-based compensation expense:
+    target: stock_based_compensation
+    confidence: 0.9
+    section: operating
+  Deferred income taxes:
+    target: deferred_income_tax
+    confidence: 0.9
+    section: operating
+  Accounts receivable:
+    target: accounts_receivables
+    confidence: 0.9
+    section: operating
+  Inventories:
+    target: inventory
+    confidence: 0.9
+    section: operating
+  Other current assets:
+    target: other_assets
+    confidence: 0.9
+    section: operating
+  Other long-term assets:
+    target: other_assets
+    confidence: 0.9
+    section: operating
+  Accounts payable:
+    target: accounts_payables
+    confidence: 0.9
+    section: operating
+  Unearned revenue:
+    target: unearned_revenue
+    confidence: 0.9
+    section: operating
+  Other current liabilities:
+    target: other_liabilities
+    confidence: 0.9
+    section: operating
+  Other long-term liabilities:
+    target: other_liabilities
+    confidence: 0.9
+    section: operating
+  Net cash from operations:
+    target: net_cash_provided_by_operating_activities
+    confidence: 0.9
+    section: operating
+  Proceeds from issuance (repayments) of debt, maturities of 90 days or less, net:
+    target: term_debt_issuance
+    confidence: 0.9
+    section: financing
+  Proceeds from issuance of debt:
+    target: term_debt_issuance
+    confidence: 0.9
+    section: financing
+  Repayments of debt:
+    target: term_debt_repayment
+    confidence: 0.9
+    section: financing
+  Common stock repurchased:
+    target: common_stock_repurchased
+    confidence: 0.9
+    section: financing
+  Common stock cash dividends paid:
+    target: common_dividends_paid
+    confidence: 0.9
+    section: financing
+  Net cash from (used in) financing:
+    target: net_cash_provided_by_financing_activities
+    confidence: 0.9
+    section: financing
+  Acquisition of companies, net of cash acquired, and purchases of intangible and other assets:
+    target: other_assets
+    confidence: 0.9
+    section: investing
+  Purchases of investments:
+    target: purchases_of_investments
+    confidence: 0.9
+    section: investing
+  Maturities of investments:
+    target: sales_maturities_of_investments
+    confidence: 0.9
+    section: investing
+  Sales of investments:
+    target: sales_maturities_of_investments
+    confidence: 0.9
+    section: investing
+  Net cash from (used in) investing:
+    target: net_cash_provided_by_investing_activities
+    confidence: 0.9
+    section: investing
+  Effect of foreign exchange rates on cash and cash equivalents:
+    target: effect_of_foreign_exchanges_rate_changes_on_cash
+    confidence: 0.9
+    section: supplemental
+  Net change in cash and cash equivalents:
+    target: net_change_in_cash
+    confidence: 0.9
+    section: supplemental
+  Cash and cash equivalents, beginning of period:
+    target: cash_at_beginning_of_period
+    confidence: 0.9
+    section: supplemental
+  Cash and cash equivalents, end of period:
+    target: cash_at_end_of_period
+    confidence: 0.9
+    section: supplemental

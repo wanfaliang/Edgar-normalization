@@ -1,0 +1,94 @@
+company:
+  cik: '320193'
+  name: APPLE INC
+  ticker: AAPL
+filing:
+  adsh: 0000320193-24-000123
+  dataset: 2024Q4
+statement: balance_sheet
+mappings:
+  Cash and cash equivalents:
+    target: cash_and_cash_equivalents
+    confidence: 1.0
+  Marketable securities:
+    target: short_term_investments
+    confidence: 1.0
+  Accounts receivable, net:
+    target: account_receivables_net
+    confidence: 0.9
+  Vendor non-trade receivables:
+    target: other_receivables
+    confidence: 1.0
+  Inventories:
+    target: inventory
+    confidence: 1.0
+  Other current assets:
+    target: other_current_assets
+    confidence: 1.0
+  Total current assets:
+    target: total_current_assets
+    confidence: 1.0
+  Property, plant and equipment, net:
+    target: property_plant_equipment_net
+    confidence: 1.0
+  Other non-current assets:
+    target: other_non_current_assets
+    confidence: 1.0
+  Total non-current assets:
+    target: total_non_current_assets
+    confidence: 1.0
+  Total assets:
+    target: total_assets
+    confidence: 1.0
+  Accounts payable:
+    target: account_payables
+    confidence: 1.0
+  Other current liabilities:
+    target: other_current_liabilities
+    confidence: 1.0
+  Deferred revenue:
+    target: deferred_revenue
+    confidence: 1.0
+  Commercial paper:
+    target: short_term_debt
+    confidence: 1.0
+  Term debt:
+    target: long_term_debt
+    confidence: 1.0
+  Total current liabilities:
+    target: total_current_liabilities
+    confidence: 1.0
+  Other non-current liabilities:
+    target: other_non_current_liabilities
+    confidence: 1.0
+  Total non-current liabilities:
+    target: total_non_current_liabilities
+    confidence: 1.0
+  Total liabilities:
+    target: total_liabilities
+    confidence: 1.0
+  Commitments and contingencies:
+    target: commitments_and_contingencies
+    confidence: 0.9
+  Common stock, shares outstanding (in shares):
+    target: common_stock
+    confidence: 0.9
+  Common stock, shares issued (in shares):
+    target: common_stock
+    confidence: 0.9
+  ? 'Common stock and additional paid-in capital, $0.00001 par value: 50,400,000 shares
+    authorized; 15,116,786 and 15,550,061 shares issued and outstanding, respectively'
+  : target: common_stock
+    confidence: 0.9
+  Accumulated deficit:
+    target: retained_earnings
+    confidence: 1.0
+  Accumulated other comprehensive loss:
+    target: accumulated_other_comprehensive_income_loss
+    confidence: 1.0
+  Total shareholders equity:
+    target: total_stockholders_equity
+    confidence: 1.0
+  Total liabilities and shareholders equity:
+    target: total_liabilities_and_total_equity
+    confidence: 1.0

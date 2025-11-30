@@ -1,0 +1,362 @@
+company:
+  cik: '789019'
+  name: MICROSOFT CORP
+  ticker: MSFT
+filing:
+  adsh: 0000950170-24-118967
+  dataset: 2024Q4
+statement: balance_sheet
+control_items:
+  total current assets: 9
+  total assets: 16
+  total current liabilities: 26
+  total liabilities: 33
+  total stockholders equity: 39
+  total liabilities and total equity: 40
+detailed_mappings:
+- plabel: Cash and cash equivalents
+  target: cash_and_cash_equivalents
+  value: 20840000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Short-term investments
+  target: short_term_investments
+  value: 57588000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Total cash, cash equivalents, and short-term investments
+  target: cash_and_cash_equivalents
+  value: 78428000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Accounts receivable, net of allowance for doubtful accounts of $647 and
+    $830
+  target: accounts_receivables
+  value: 44148000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Inventories
+  target: inventory
+  value: 1626000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Other current assets
+  target: other_current_assets
+  value: 25724000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Total current assets
+  target: total_current_assets
+  value: 149926000000.0
+  section: current_assets
+  confidence: 0.95
+- plabel: Property and equipment, net of accumulated depreciation of $80,517 and $76,421
+  target: property_plant_equipment_net
+  value: 152863000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Operating lease right-of-use assets
+  target: operating_lease_right_of_use_assets
+  value: 20528000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Equity and other investments
+  target: long_term_investments
+  value: 15778000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Goodwill
+  target: goodwill
+  value: 119374000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Intangible assets, net
+  target: intangible_assets_net
+  value: 26751000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Other long-term assets
+  target: other_non_current_assets
+  value: 37793000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Total assets
+  target: total_assets
+  value: 523013000000.0
+  section: non_current_assets
+  confidence: 0.95
+- plabel: Accounts payable
+  target: accounts_payables
+  value: 22768000000.0
+  section: current_liabilities
+  confidence: 0.95
+- plabel: Short-term debt
+  target: short_term_debt
+  value: null
+  section: current_liabilities
+  confidence: 0.95
+- plabel: Current portion of long-term debt
+  target: short_term_debt
+  value: 2249000000.0
+  section: current_liabilities
+  confidence: 0.95
+- plabel: Short-term unearned revenue
+  target: deferred_revenue_current
+  value: 53026000000.0
+  section: current_liabilities
+  confidence: 0.95
+- plabel: Other current liabilities
+  target: other_current_liabilities
+  value: 19114000000.0
+  section: current_liabilities
+  confidence: 0.95
+- plabel: Total current liabilities
+  target: total_current_liabilities
+  value: 115200000000.0
+  section: current_liabilities
+  confidence: 0.95
+- plabel: Long-term debt
+  target: long_term_debt
+  value: 42868000000.0
+  section: non_current_liabilities
+  confidence: 0.95
+- plabel: Long-term unearned revenue
+  target: deferred_revenue_non_current
+  value: 2663000000.0
+  section: non_current_liabilities
+  confidence: 0.95
+- plabel: Deferred income taxes
+  target: deferred_tax_liabilities_non_current
+  value: 2581000000.0
+  section: non_current_liabilities
+  confidence: 0.95
+- plabel: Operating lease liabilities
+  target: operating_lease_obligations_non_current
+  value: 16361000000.0
+  section: non_current_liabilities
+  confidence: 0.95
+- plabel: Total liabilities
+  target: total_liabilities
+  value: 235290000000.0
+  section: non_current_liabilities
+  confidence: 0.95
+- plabel: Common stock and paid-in capital - shares authorized 24,000; outstanding
+    7,436 and 7,434
+  target: common_stock
+  value: 102976000000.0
+  section: stockholders_equity
+  confidence: 0.95
+- plabel: Retained earnings
+  target: retained_earnings
+  value: 188929000000.0
+  section: stockholders_equity
+  confidence: 0.95
+- plabel: Accumulated other comprehensive loss
+  target: accumulated_other_comprehensive_income
+  value: -4182000000.0
+  section: stockholders_equity
+  confidence: 0.95
+- plabel: Total stockholders equity
+  target: total_stockholders_equity
+  value: 287723000000.0
+  section: stockholders_equity
+  confidence: 0.95
+- plabel: Total liabilities and stockholders equity
+  target: total_stockholders_equity
+  value: 523013000000.0
+  section: equity_total
+  confidence: 0.95
+standardized_schema:
+  cash_and_cash_equivalents:
+    total_value: 99268000000.0
+    count: 2
+    section: current_assets
+    source_items:
+    - Cash and cash equivalents
+    - Total cash, cash equivalents, and short-term investments
+    confidence: 0.95
+  short_term_investments:
+    total_value: 57588000000.0
+    count: 1
+    section: current_assets
+    source_items:
+    - Short-term investments
+    confidence: 0.95
+  accounts_receivables:
+    total_value: 44148000000.0
+    count: 1
+    section: current_assets
+    source_items:
+    - Accounts receivable, net of allowance for doubtful accounts of $647 and $830
+    confidence: 0.95
+  inventory:
+    total_value: 1626000000.0
+    count: 1
+    section: current_assets
+    source_items:
+    - Inventories
+    confidence: 0.95
+  other_current_assets:
+    total_value: 25724000000.0
+    count: 1
+    section: current_assets
+    source_items:
+    - Other current assets
+    confidence: 0.95
+  total_current_assets:
+    total_value: 149926000000.0
+    count: 1
+    section: current_assets
+    source_items:
+    - Total current assets
+    confidence: 0.95
+  property_plant_equipment_net:
+    total_value: 152863000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Property and equipment, net of accumulated depreciation of $80,517 and $76,421
+    confidence: 0.95
+  operating_lease_right_of_use_assets:
+    total_value: 20528000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Operating lease right-of-use assets
+    confidence: 0.95
+  long_term_investments:
+    total_value: 15778000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Equity and other investments
+    confidence: 0.95
+  goodwill:
+    total_value: 119374000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Goodwill
+    confidence: 0.95
+  intangible_assets_net:
+    total_value: 26751000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Intangible assets, net
+    confidence: 0.95
+  other_non_current_assets:
+    total_value: 37793000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Other long-term assets
+    confidence: 0.95
+  total_assets:
+    total_value: 523013000000.0
+    count: 1
+    section: non_current_assets
+    source_items:
+    - Total assets
+    confidence: 0.95
+  accounts_payables:
+    total_value: 22768000000.0
+    count: 1
+    section: current_liabilities
+    source_items:
+    - Accounts payable
+    confidence: 0.95
+  short_term_debt:
+    total_value: 2249000000.0
+    count: 2
+    section: current_liabilities
+    source_items:
+    - Short-term debt
+    - Current portion of long-term debt
+    confidence: 0.95
+  deferred_revenue_current:
+    total_value: 53026000000.0
+    count: 1
+    section: current_liabilities
+    source_items:
+    - Short-term unearned revenue
+    confidence: 0.95
+  other_current_liabilities:
+    total_value: 19114000000.0
+    count: 1
+    section: current_liabilities
+    source_items:
+    - Other current liabilities
+    confidence: 0.95
+  total_current_liabilities:
+    total_value: 115200000000.0
+    count: 1
+    section: current_liabilities
+    source_items:
+    - Total current liabilities
+    confidence: 0.95
+  long_term_debt:
+    total_value: 42868000000.0
+    count: 1
+    section: non_current_liabilities
+    source_items:
+    - Long-term debt
+    confidence: 0.95
+  deferred_revenue_non_current:
+    total_value: 2663000000.0
+    count: 1
+    section: non_current_liabilities
+    source_items:
+    - Long-term unearned revenue
+    confidence: 0.95
+  deferred_tax_liabilities_non_current:
+    total_value: 2581000000.0
+    count: 1
+    section: non_current_liabilities
+    source_items:
+    - Deferred income taxes
+    confidence: 0.95
+  operating_lease_obligations_non_current:
+    total_value: 16361000000.0
+    count: 1
+    section: non_current_liabilities
+    source_items:
+    - Operating lease liabilities
+    confidence: 0.95
+  total_liabilities:
+    total_value: 235290000000.0
+    count: 1
+    section: non_current_liabilities
+    source_items:
+    - Total liabilities
+    confidence: 0.95
+  common_stock:
+    total_value: 102976000000.0
+    count: 1
+    section: stockholders_equity
+    source_items:
+    - Common stock and paid-in capital - shares authorized 24,000; outstanding 7,436
+      and 7,434
+    confidence: 0.95
+  retained_earnings:
+    total_value: 188929000000.0
+    count: 1
+    section: stockholders_equity
+    source_items:
+    - Retained earnings
+    confidence: 0.95
+  accumulated_other_comprehensive_income:
+    total_value: -4182000000.0
+    count: 1
+    section: stockholders_equity
+    source_items:
+    - Accumulated other comprehensive loss
+    confidence: 0.95
+  total_stockholders_equity:
+    total_value: 810736000000.0
+    count: 2
+    section: stockholders_equity
+    source_items:
+    - Total stockholders equity
+    - Total liabilities and stockholders equity
+    confidence: 0.95

@@ -499,8 +499,9 @@ class StatementReconstructor:
             is_beginning = False
             if node.plabel:
                 plabel_lower = node.plabel.lower()
-                is_beginning = ('beginning' in plabel_lower and
-                              ('period' in plabel_lower or 'year' in plabel_lower))
+                # More flexible detection: just need 'beginning' keyword
+                # Examples: "beginning balances", "beginning of period", "beginning of year"
+                is_beginning = 'beginning' in plabel_lower
 
             # Get NUM data (value, ddate, qtrs, uom, segments, coreg)
             num_data = get_num_data_for_tag(node.tag, is_beginning_balance=is_beginning)
@@ -658,8 +659,9 @@ class StatementReconstructor:
             is_beginning = False
             if node.plabel:
                 plabel_lower = node.plabel.lower()
-                is_beginning = ('beginning' in plabel_lower and
-                              ('period' in plabel_lower or 'year' in plabel_lower))
+                # More flexible detection: just need 'beginning' keyword
+                # Examples: "beginning balances", "beginning of period", "beginning of year"
+                is_beginning = 'beginning' in plabel_lower
 
             # Get NUM data for this period
             num_data = get_num_data_for_tag(node.tag, is_beginning_balance=is_beginning)
@@ -867,6 +869,7 @@ class StatementReconstructor:
                     'stmt': node.stmt,
                     'report': node.report,
                     'line': node.line,
+                    'stmt_order': node.line,  # For section classification
                     'inpth': node.level,
                     'negating': node.negating,
 
@@ -1035,8 +1038,9 @@ class StatementReconstructor:
                 is_beginning_node = False
                 if node.plabel:
                     plabel_lower = node.plabel.lower()
-                    is_beginning_node = ('beginning' in plabel_lower and
-                                       ('period' in plabel_lower or 'year' in plabel_lower))
+                    # More flexible detection: just need 'beginning' keyword
+                    # Examples: "beginning balances", "beginning of period", "beginning of year"
+                    is_beginning_node = 'beginning' in plabel_lower
 
                 # Build values dict for this line item
                 period_values = {}
@@ -1149,6 +1153,7 @@ class StatementReconstructor:
                     'stmt': node.stmt,
                     'report': node.report,
                     'line': node.line,
+                    'stmt_order': node.line,  # For section classification
                     'inpth': node.level,
                     'negating': node.negating,
 

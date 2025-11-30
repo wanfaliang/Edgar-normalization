@@ -1,0 +1,133 @@
+company:
+  cik: '1018724'
+  name: AMAZON COM INC
+  ticker: AMZN
+filing:
+  adsh: 0001018724-25-000004
+  dataset: 2025Q1
+statement: cash_flow
+control_items:
+  operating: 16
+  investing: 23
+  financing: 32
+mappings:
+  CASH, CASH EQUIVALENTS, AND RESTRICTED CASH, BEGINNING OF PERIOD:
+    target: cash at beginning of period
+    confidence: 0.9
+    section: operating
+  Net income (loss):
+    target: net income
+    confidence: 0.9
+    section: operating
+  Depreciation and amortization of property and equipment and capitalized content costs, operating lease assets, and other:
+    target: depreciation and amortization
+    confidence: 0.9
+    section: operating
+  Stock-based compensation:
+    target: stock based compensation
+    confidence: 0.9
+    section: operating
+  Non-operating expense (income), net:
+    target: non operating expense income
+    confidence: 0.9
+    section: operating
+  Deferred income taxes:
+    target: deferred income tax
+    confidence: 0.9
+    section: operating
+  Inventories:
+    target: inventory
+    confidence: 0.9
+    section: operating
+  Accounts receivable, net and other:
+    target: accounts receivables
+    confidence: 0.9
+    section: operating
+  Other assets:
+    target: change in other working capital
+    confidence: 0.9
+    section: operating
+  Accounts payable:
+    target: accounts payables
+    confidence: 0.9
+    section: operating
+  Accrued expenses and other:
+    target: accrued expenses
+    confidence: 0.9
+    section: operating
+  Unearned revenue:
+    target: unearned revenue
+    confidence: 0.9
+    section: operating
+  Net cash provided by (used in) operating activities:
+    target: net cash provided by operating activities
+    confidence: 0.9
+    section: operating
+  Purchases of property and equipment:
+    target: investments in property plant and equipment
+    confidence: 0.9
+    section: investing
+  Proceeds from property and equipment sales and incentives:
+    target: proceeds from sales of ppe
+    confidence: 0.9
+    section: investing
+  Acquisitions, net of cash acquired, non-marketable investments, and other:
+    target: other acquistions and investments
+    confidence: 0.9
+    section: investing
+  Sales and maturities of marketable securities:
+    target: sales maturities of investments
+    confidence: 0.9
+    section: investing
+  Purchases of marketable securities:
+    target: purchases of investments
+    confidence: 0.9
+    section: investing
+  Net cash provided by (used in) investing activities:
+    target: net cash provided by investing activities
+    confidence: 0.9
+    section: investing
+  Common stock repurchased:
+    target: common stock repurchased
+    confidence: 0.9
+    section: financing
+  Proceeds from short-term debt, and other:
+    target: short-term debt issuance
+    confidence: 0.9
+    section: financing
+  Repayments of short-term debt, and other:
+    target: short term debt repayment
+    confidence: 0.9
+    section: financing
+  Proceeds from long-term debt:
+    target: long term net debt issuance
+    confidence: 0.9
+    section: financing
+  Repayments of long-term debt:
+    target: long term net debt repayment
+    confidence: 0.9
+    section: financing
+  Principal repayments of finance leases:
+    target: finance lease repayment
+    confidence: 0.9
+    section: financing
+  Principal repayments of financing obligations:
+    target: financing obligations repayment
+    confidence: 0.9
+    section: financing
+  Net cash provided by (used in) financing activities:
+    target: net cash provided by financing activities
+    confidence: 0.9
+    section: financing
+  Foreign currency effect on cash, cash equivalents, and restricted cash:
+    target: effect of foreign exchanges rate changes on cash
+    confidence: 0.9
+    section: supplemental
+  Net increase (decrease) in cash, cash equivalents, and restricted cash:
+    target: net change in cash
+    confidence: 0.9
+    section: supplemental
+  CASH, CASH EQUIVALENTS, AND RESTRICTED CASH, END OF PERIOD:
+    target: cash at end of period
+    confidence: 0.9
+    section: supplemental

@@ -1,0 +1,88 @@
+company:
+  cik: '1018724'
+  name: AMAZON COM INC
+  ticker: AMZN
+filing:
+  adsh: 0001018724-24-000083
+  dataset: 2024Q2
+statement: balance_sheet
+mappings:
+  Cash and cash equivalents:
+    target: cash_and_cash_equivalents
+    confidence: 1.0
+  Marketable securities:
+    target: short_term_investments
+    confidence: 1.0
+  Inventories:
+    target: inventory
+    confidence: 1.0
+  Accounts receivable, net and other:
+    target: account_receivables_net
+    confidence: 0.9
+  Total current assets:
+    target: total_current_assets
+    confidence: 1.0
+  Property and equipment, net:
+    target: property_plant_equipment_net
+    confidence: 0.9
+  Operating leases:
+    target: operating_lease_right_of_use_assets
+    confidence: 1.0
+  Goodwill:
+    target: goodwill
+    confidence: 1.0
+  Other assets:
+    target: other_non_current_assets
+    confidence: 1.0
+  Total assets:
+    target: total_assets
+    confidence: 1.0
+  Accounts payable:
+    target: account_payables
+    confidence: 1.0
+  Accrued expenses and other:
+    target: accrued_expenses
+    confidence: 1.0
+  Unearned revenue:
+    target: deferred_revenue
+    confidence: 1.0
+  Total current liabilities:
+    target: total_current_liabilities
+    confidence: 1.0
+  Long-term lease liabilities:
+    target: operating_lease_obligations_non_current
+    confidence: 1.0
+  Long-term debt:
+    target: long_term_debt
+    confidence: 1.0
+  Other long-term liabilities:
+    target: other_non_current_liabilities
+    confidence: 1.0
+  Commitments and contingencies (Note 4):
+    target: commitments_and_contingencies
+    confidence: 0.9
+  Preferred stock ($0.01 par value; 500 shares authorized; no shares issued or outstanding):
+    target: preferred_stock
+    confidence: 0.9
+  ? Common stock ($0.01 par value; 100,000 shares authorized; 10,898 and 10,918 shares
+    issued; 10,383 and 10,403 shares outstanding)
+  : target: common_stock
+    confidence: 0.9
+  Treasury stock, at cost:
+    target: treasury_stock
+    confidence: 1.0
+  Additional paid-in capital:
+    target: additional_paid_in_capital
+    confidence: 1.0
+  Accumulated other comprehensive income (loss):
+    target: accumulated_other_comprehensive_income_loss
+    confidence: 1.0
+  Retained earnings:
+    target: retained_earnings
+    confidence: 1.0
+  Total stockholders equity:
+    target: total_stockholders_equity
+    confidence: 1.0
+  Total liabilities and stockholders equity:
+    target: total_liabilities_and_total_equity
+    confidence: 1.0

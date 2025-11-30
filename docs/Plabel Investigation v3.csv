@@ -1,0 +1,164 @@
+﻿Field Names in DB,By Calculation,Target,Common Variations,Statements
+cash_and_cash_equivalents,,cash and cash equivalents,cash,balance sheet
+short_term_investments,,short_term investments,marketable securities; marketable debt securities; short-term marketable securities,balance sheet
+cash_and_short_term_investments,,cash and short term investment,total cash and short-term investments,balance sheet
+account_receivables_net,,"account receivables, net",trade receivables; trade accounts receivable; accounts and notes receivable; receivables,balance sheet
+other_receivables,,other receivables,,balance sheet
+inventory,,inventory,inventories;  total inventories; merchandise inventory; materials and supplies,balance sheet
+prepaids,,prepaids,prepayments; prepaid expenses,balance sheet
+other_current_assets,,other current assets,,balance sheet
+total_current_assets,,total current assets,,balance sheet
+long_term_investments,,long term investments,investments; marketable securities; Long-term marketable securities,balance sheet
+property_plant_equipment_ne,,property plant equipment net,Property and equipment; Premises and equipment; property,balance sheet
+finance_lease_right_of_use_assets,,finance lease right of use assets,right of use assets,balance sheet
+operating_lease_ right_of_use _ssets,,operating lease right-of-use assets,,balance sheet
+intangible_assets,,intangible assets,,balance sheet
+goodwill,,goodwill,,balance sheet
+goodwill_and_intangible_assets,,goodwill and intangible assets,,balance sheet
+deferred_tax_assets,,tax assets,deferred income tax assets; deferred tax assets; deferred taxes on income,balance sheet
+other_non_current_assets,,other non current assets,,balance sheet
+total_non_current_assets,,total non current assets,,balance sheet
+total_assets,,total assets,assets,balance sheet
+account_payables,,account payables,accounts payable,balance sheet
+other_payables,,other payables,,balance sheet
+accrued_expenses,,accrued expenses,accrued liabilities,balance sheet
+accrued_payroll,,accrued payroll,"accrued employment costs; salaries, benefits and payroll taxes; accrued compensation and related benefits; accrued wages and withholdings",balance sheet
+short_term_debt,,short-term debt,"short-term borrowings; loans; loans and notes payable; Current maturities of debt; notes payable and other borrowings, current; debt due within one year; long-term debt due within one year; ",balance sheet
+current_portion_of_long_term_debt,,current portion of long-term debt,current maturities of long-term debt; ,balance sheet
+finance_lease_obligations_current,,capital lease obligations current,capital lease obligations current; current portion of finance lease liabilities,balance sheet
+operating_lease_obligations_current,,operating lease obligations current,current portion of operating lease liabilities; current maturities of operating leases,balance sheet
+tax_payables,,tax payables,accrued income taxes,balance sheet
+deferred_revenue,,deferred revenue,unearned revenue; unexpired subscriptions revenue; unearned premiums; unearned fees; ,balance sheet
+other_current_liabilities,,other current liabilities,,balance sheet
+total_current_liabilities,,total current liabilities,,balance sheet
+long_term_debt,,long term debt,"notes payable and other borrowings, non-current; debt due after one year",balance sheet
+pension_and_postretirement_benefits,,pension and postretirement benefits,accrued pension liabilities; pension and postretirement benefits obligation,balance sheet
+deferred_revenue_non_current,,deferred revenue non-current,"deferred revenue long-term; long-term unearned revenue; deferred revenue, net of current portion",balance sheet
+deferred_tax_liabilities_non_current,,deferred tax liabilities non-current,deferred income taxes; deferred taxes on income,balance sheet
+finance_lease_obligations_non_current,,finance lease obligations non-current,capital lease obligations non-current,balance sheet
+operating_lease_obligations_non_current,,operating lease obligations non-current,long-term operating lease liabilities; ,balance sheet
+operating_lease_liabilities,,operating lease liabilities,,balance sheet
+commitments_and_contingencies,,commitments and contingencies,,balance sheet
+other_non_current_liabilities,,other non-current liabilities,,balance sheet
+total_non_current_liabilities,,total non-current liabilities,,balance sheet
+total_liabilities,,total liabilities,liabilities,balance sheet
+treasury_stock,,treasury stock,"treasury stock, at cost",balance sheet
+preferred_stock,,preferred stock,"preferred stock, at cost; preferred stock, par value",balance sheet
+common_stock,,common stock,"common stock, at cost; common stock cost; common stock, par value",balance sheet
+retained_earnings,,retained earnings,accumulated deficit; accumulated earnings; retained earnings (accumulated deficit),balance sheet
+additional_paid_in_capital,,additional paid in capital,capital in excess of par value of shares; capital in excess of par value,balance sheet
+accumulated_other_comprehensive_income_loss,,accumulated other comprehensive income loss,"accumulated other comprehensive loss; accumulated other comprehensive income, accumulated other comprehensive income (loss); Accumulated other comprehensive income/(loss); ",balance sheet
+other_total_stockholders_equity,,other total stockholders equity,,balance sheet
+total_stockholders_equity,,total stockholders equity,"total stockholders' equity; total shareholders equity, total shareholders' equity;  total shareowners' equity; total shareowners equity; ",balance sheet
+total_equity,,total equity,,balance sheet
+redeemable_non_controlling_interests,,redeemable non-controlling interests,redeemable noncontrolling interests in subsidiaries,balance sheet
+minority_interest,,minority interest,noncontrolling interest; noncontrolling interests; noncontrolling interests in subsidiaries,balance sheet
+total_liabilities_and_total_equity,,total liabilities and total equity,total liabilities and equity; total liabilities and shareholders' equity; total liabilities and shareholders equity; total liabilities and stockholders' equity; total liabilities and stockholders equity; total liabilities and shareowners' equity; total liabilities and shareowners equity; ,balance sheet
+revenue,,revenue,total revenues; net revenue; net revenues; revenues; net sales; sales; Total net sales; Total revenues net of interest expense; Total revenues net of expense; revenues net of expenses; Total net revenue; Total net sales and revenue; Sales to customers; Cost of revenue (excluding depreciation and amortization); Total operating revenues; ,income statement
+cost_of_revenue,,cost of revenue,"cost of sales; cost of sales, net; Cost of products sold; Cost of goods sold; Cost of goods sold and * expenses; Total cost of sales; Total cost of revenues; ",income statement
+gross_profit,,gross profit,,income statement
+research_and_development_expenses,,research and development expenses,"research, development and related expenses; Research, development, and related expenses; research, development expenses; R&D expenses; Research and development; Research and development expense;  Technology and development;  Product development;",income statement
+general_and_administrative_expenses,,general and administrative expenses,general and administrative; Other selling and administrative expenses;,income statement
+sales_and_marketing_expenses,,sales and marketing expenses,"sales and marketing; selling and marketing; selling and marketing expenses; Selling, marketing and administrative expenses; Advertising and marketing; Advertising and promotion expenses; Marketing and sales",income statement
+selling_general_and_administrative_expenses,,selling general and administrative expenses,"Selling, general and administrative expenses; Selling, general, and administrative expenses; Selling, general and administrative; Marketing, administration and research costs; Operating, selling, general and administrative expenses; ",income statement
+other_expenses,,other expenses,"other expenses (income), net; other expenses (income); Other operating expense (income), net; Other charges (income), net; Other expenses (income), net; other expense, net; other expenses (income); other income",income statement
+operating_expenses,,operating expenses,total operating expenses; Total expenses; ,income statement
+cost_and_expenses,,cost and expenses,total cost and expenses; total operating costs and expenses; Total operating costs;,income statement
+interest_income,,interest income,"interest income, net; interest income net;",income statement
+interest_expense,,interest expense,"Interest expenses, net; Interest expenses net; Interest expense, net of amounts capitalized; ",income statement
+net_interest_income,,net interest income,"interest income net; interest income, net; Interest expense, net; Interest (income);",income statement
+depreciation_and_amortization,,depreciation and amortization,Depreciation and amortization expenses; Depreciation and amortization charges; Amortization of intangible assets; ,income statement
+total_other_income_expenses_net,,total other income expenses net,"Other income (expense), net; Other (income) expense, net; Other income (expenses); total other income; Interest and other income (expense); Interest income and other, net; Other income/(expense), net; Total Other Income and (Expense); Other (gains) and losses;",income statement
+operating_income,,operating income,operating loss; operating Income (loss); Income (loss); operating income before income taxes; operating loss before income taxes; operating Income (loss) before income taxes; Income (loss)  before income taxes;Income (loss) from continuing operations;Income (loss) from continuing operations before income taxes; operating earnings; Loss from operations; Income from operations; Operating Profit; ,income statement
+non_operating_income,,non-operating income,"non-operating income (loss), non-operating income, net; non-operating loss, net; total non-operating income (expense); Other non-operating income (loss), net; ",income statement
+income_before_tax,,income before tax,income before taxes; earnings before tax; eranings before taxes; income before income tax;  income before income taxes; earnings before income tax; earnings before income taxes; income (loss) before tax;  income (loss) before taxes; income (loss) before income tax; income (loss) before income taxes; pretax income; Income before provision for income taxes; Income (loss) before provision for income taxes; Income before provision for income taxe; Income (loss) before provision for income tax; Income (loss) from continuing operations before income taxes; Income from continuing operations before income taxes; loss from continuing operations before income taxes; Earnings before provision for taxes on income; Income/(loss) before income tax expense/(benefit);  Loss before income taxes; Income (loss) before provision for income taxes; ,income statement
+income_tax_expense,,income tax expense,provision (benefit) for income tax; provision (benefit) for income taxes; provision for income taxes; income tax expense (benefit); Benefit (provision) for income taxes; income tax provision; Provision for taxes on income;  Provision for/(benefit from) income taxes; ,income statement
+Net-income-from-continuing-operations,,Net income from continuing operations,Net income (loss) from continuing operations; net loss from continuing operations; net earnings (loss) from continuing operations; net earnings from continuing operations; net loss from continuing operations; ,income statement
+net_income_from_discontinued_operations,,net income from discontinued operations,"net income (loss) from discontinued operations; net income from discontinued operations; net loss from discontinued operations; net income from discontinued operations, net of taxes; net income (loss) from discontinued operations, net of taxes;  net loss from discontinued operations, net of taxes; Income from discontinued operations, net of tax; Income (loss) from discontinued operations, net of tax; loss from discontinued operations, net of tax;",income statement
+net_income,,net income,"income[position: if below income, or loss]; income, net; net income (loss) from continuing operations including noncontrolling interest; net income (loss) including noncontrolling interest; net income including noncontrolling interest;  net loss including noncontrolling interest; net earnings; net income (loss); net loss; Net earnings; Net loss; Consolidated net loss; Consolidated net income; Consolidated net  income (loss);  Net income including non-controlling interests; ",income statement
+net_income_attributed_to_non_controlling_interests,,net income attributed to non-controlling interests,net income attributed to non controlling interests; net income attributed to minority interests; net income attributable to non controlling interests; net income attributable to minority interests; ; net earnings attributable to non controlling interests; net earnings attributable to minority interests; net income attributable to noncontrolling interests; Net loss (income) attributable to noncontrolling interests; Net income attributable to redeemable and nonredeemable noncontrolling interests; Net earnings attributable to noncontrolling interests; Net loss attributable to noncontrolling interest; ,income statement
+net_income_attributable_to_controlling_interests,,net income attributable to controlling interests,net income (loss) attributed to controlling interests; net loss attributed to controlling interests; net income attributed to XXX ; net income (loss) attributed to XXX; net income (loss) attributable to controlling interests; net loss attributable to controlling interests; net income attributable to XXX ; net income (loss) attributable to XXX; Net income attributable to common stock;   Net income (loss) attributable to XXX shareholders; Net income (loss) attributable to common stockholders; Net income attributable to common stockholders; Net loss attributable to common stockholders; Basic net income applicable to common stockholders; Net loss attributable to common stockholders; ,income statement
+eps,,eps,earnings per share  basic; loss per share  basic;earnings (loss) per share  basic; earnings per share  basic (in dollars); loss per share  basic (in dollars);earnings (loss) per share  basic (in dollars); Basic earnings per share (in dollars per share); Basic earnings per share (in dollars per share); Basic (in dollars per share); Net income per share basic; Earnings (loss) per common share attributable to XXX common shareholders - basic (in dollars per share); Basic earnings per share attributable to the shareholders of XXX (in dollars per share); Earnings (loss) per sharebasic; Basic earnings per common share (in dollars per share); Basic EPS; Basic (in usd per share); Net Income Per Common Share - Basic (USD per share); Basic (in USD per share); Basic: Earnings per common share (usd per share); ,income statement
+eps_diluted,,eps diluted,earnings per share  diluted; loss per share  diluted;earnings (loss) per share  diluted; earnings per share  diluted (in dollars); loss per share  diluted (in dollars);earnings (loss) per share  diluted (in dollars); Diluted earnings per share (in dollars per share); Diluted earnings per share (in dollars per share); Diluted (in dollars per share); Net income per share diluted; Earnings (loss) per common share attributable to XXX common shareholders - diluted (in dollars per share); Diluted earnings per share attributable to the shareholders of XXX (in dollars per share); Earnings (loss) per sharediluted; Diluted earnings per common share (in dollars per share); diluted EPS; Diluted (in usd per share); Net Income Per Common Share - Diluted (USD per share);  Diluted (in USD per share); Diluted: Earnings per common share (usd per share),income statement
+weighted_average_shares_outstanding,,weighted average shares outstanding,weighted average  common shares outstanding;  weighted average common shares outstanding basic; weighted average common shares outstanding - basic; weighted average  common shares outstanding (in shares); weighted average common shares outstanding - basic (in shares); weighted-average basic shares outstanding (in shares); Basic (in shares); basic; Weighted-average number of sharesbasic; Weighted-average common shares outstanding  basic (in shares); Weighted-average basic shares (in shares); Weighted-average number of common shares (in shares); Average common shares outstanding  Basic;,income statement
+weighted_average_shares_outstanding_diluted,,weighted average shares outstanding diluted,"weighted average  common shares outstanding diluted;  weighted average common shares outstanding, diluted; weighted average  common shares outstanding diluted (in shares);  weighted average common shares outstanding, diluted (in shares); Weighted-average diluted shares outstanding (in shares); Diluted (in shares); diluted; Weighted-average number of sharesdiluted; Weighted-average common shares outstanding  diluted (in shares);Weighted-average diluted shares (in shares); Weighted-average number of common and potential common shares (in shares); Total average equivalent common shares  Diluted;",income statement
+other_adjustments_to_net_income,[preserved item],other adjustments to net income,,income statement
+net_income_deductions,[preserved item],net income deductions,,income statement
+bottom_line_net_income,[preserved item],bottom line net income,,income statement
+gross_profit_ratio,[gross_profit divided by revenue],gross profit ratio,,income statement
+ebitda,[net_income plus income_tax_expense plus interest_expense plus depreciation_and_amortization],ebitda,,income statement
+ebitda_ratio,[ebitda divided by revenue],ebitda ratio,,income statement
+ebit,[net_income plus income_tax_expense plus interest_expense],ebit,,income statement
+ebit_ratio,[ebit divided by revenue],ebit_ratio,,
+operating_income_ratio,[operating_income divided by revenue],operating income ratio,,income statement
+income_before_tax_ratio,[income_before_tax divided by revenue],income before tax ratio,,income statement
+net_income_ratio,[net_income divided by revenue],net income ratio,,income statement
+net_income,,net income,[ contains 'net income' or 'net earnings' or 'net income (loss)'],cash flow statement
+depreciation_and_amortization,,depreciation and amortization,[contains 'depreciation' and contains 'amortization'] ,cash flow statement
+depreciation,,depreciation,[contains 'depreciation'] not [contains 'amortization'],
+amortization,,amortization,[contains 'amortization'] not [contains 'depreciation'],
+deferred_income_tax,,deferred income tax,[contains 'deferred' and (contains 'tax' or  contains 'taxes')],cash flow statement
+impairments,,impairments,[contains 'impairments' or contains 'impairment'],cash flow statement
+pension_and_postretirement,,pension and postretirement,[contains 'pension' or contains 'postretirement'],cash flow statement
+stock_based_compensation,,stock based compensation,[(contains 'stock-based' or contains 'stock based' or contains 'share-based' or contains 'share based') and contains 'compensation'],cash flow statement
+non_operating_expense_income,,non operating expense income,[contains 'non-operating' and (contains 'expenses' or contains 'expense' or contains 'income')] or [contains 'non operating' and (contains 'expenses' or contains 'expense' or contains 'income')] or [contains 'non-cash' and contains 'expenses'],cash flow statement
+investment_gains_losses,,investment gains losses,[(contains 'gain' or contains 'gains' or contains 'loss' or contains 'losses') and (contains 'investment' or contains 'investments')],cash flow statement
+Other_adjustments,,other adjustments,"[ equals to 'other, net'  or equals to 'other'] and {position line before that of accounts_receivables or accounts_payables or inventory}",cash flow statement
+change_in_other_working_capital,,change in other working capital,[contains 'other working capital' or  contains 'other assets'],cash flow statement
+accounts_receivables,,accounts receivables,[ (contains 'account' or contains 'accounts') and (contains 'receivable' or contains 'receivables')],cash flow statement
+vendor_receivables,,vendor receivables,[contains 'vendor' and (contains 'receivable' or contains 'receivables')],cash flow statement
+inventory,,inventory,[contains 'inventory' or contains 'inventories'],cash flow statement
+prepaids,,prepaids,[contains 'prepaids' or contains 'prepaid' or contains 'prepayments' or contains 'prepayment'],cash flow statement
+accounts_payables,,accounts payables,"[ (contains 'account' or contains 'accounts') and (contains 'payable' or contains 'payables"")]",cash flow statement
+accrued_expenses,,accrued expenses,[contains 'accrued'],cash flow statement
+unearned_revenue,,unearned revenue,[contains 'unearned'],cash flow statement
+income_taxes_payable,,income taxes payable,[contains 'income taxes' and (contains 'payable' or contains 'payables')],cash flow statement
+income_taxes,,income taxes,[contains 'income taxes' or contains 'income tax'] not [contains 'payable' or contains 'deferred' or contains 'paid'],cash flow statement
+other_assets,,other assets,[contains 'other' and contains 'assets'],cash flow statement
+other_liabilities,,other liablilities,[contains 'other' and contains 'liabilities'],cash flow statement
+other_operating_activities,,other operating activities,[(contains 'other' or contains 'others') and contains 'operating']  and [(contains 'other' or contains 'others') and {position line is smaller than that of  net cash provided by operating activities by one or two)] plus [any other items not fitting into operating activities},cash flow statement
+net_cash_provided_by_operating_activities,,net cash provided by operating activities,[contains 'cash' and (contains 'operating' or contains 'operations')] not [contains 'other' or contains 'others'],cash flow statement
+investments_in_property_plant_and_equipment,,investments in property plant and equipment,[contains 'expenditure' or contains 'expenditures' or contains 'purchases' or contains 'purchase' or contains 'acquisition' or contains 'acquisitions' or contains 'addition' or contains 'additions'] and [contains 'property' or contains 'plant' or contains 'plants' or contains 'equipment' or contains 'equipments' or contains 'PPE'],cash flow statement
+proceeds_from_sales_of_ppe,,proceeds from sales of ppe,[contains 'proceeds' or contains 'sale' or contains 'sales' or contains 'disposition'] and  [contains 'property' or contains 'plant' or contains 'plants' or contains 'equipment' or contains 'equipments' or contains 'PPE'],cash flow statement
+acquisitions_of_business_net,,acquisitions of business net,[contains 'business' or contains 'businesses'] and [contains 'acquisition' or contains 'acquisitions'],cash flow statement
+proceeds_from_divestiture,,proceeds from divestiture,[contains 'divestiture' or contains 'sale' or contains 'sales' or contains 'disposition'] and [contains 'business' or contains 'businesses'],cash flow statement
+other_aquisitons_and_investments,,other acquistions and investments,[contains 'other'] and [contains 'acquistion' or contains 'acqusitions' or contains 'investments'],cash flow statement
+purchases_of_investments,,purchases of investments,[contains 'purchases' or contains 'purchase' or contains 'acquisition' or contains 'acquisitions'] and [contains 'investments' or contains 'securities'],cash flow statement
+sales_maturities_of_investments,,sales maturities of investments,[contains 'sales' or contains 'sale' or contains 'maturity' or contains 'maturities' or contains 'proceeds'] and [contains 'investments' or contains 'securities'],cash flow statement
+other_investing_activities,,other investing activities,[(contains 'other' or contains 'others') and contains 'investing']  and [(contains 'other' or contains 'others') and {position line is smaller than that of  net cash provided by investing activities by one or two)] plus [any other items not fitting into investing activities},cash flow statement
+net_cash_provided_by_investing_activities,,net cash provided by investing activities,[contains 'cash' and contains 'investing'] not [contains 'other' or contains 'others'],cash flow statement
+short_term_debt_issuance,,short-term debt issuance,[contains 'short-term' and (contains 'issuance' or contains 'proceeds')],cash flow statement
+long_term_net_debt_issuance,,long term net debt issuance,[contains 'long-term' and (contains 'issuance' or contains 'proceeds')],cash flow statement
+short_term_debt_repayment,,short term debt repayment,[contains 'short-term' and (contains 'repayment' or contains 'repayments')],cash flow statement
+long_term_net_debt_repayment,,long term net debt repayment,[contains 'long-term' and (contains 'repayment' or contains 'repayments')],cash flow statement
+change_in_short_term_debt_net,,change in short term debt net,[contains 'change' or contains 'changes'] and [contains 'short-term debt' or contains 'shor-term'],cash flow statement
+commercial_paper_net,,commercial paper net,[contains 'commercial paper'],cash flow statement
+change_in_long_term_debt_net,,change in long term debt net,[contains'change' or contains 'changes'] and [contains 'long-term debt' or ' long-term'],cash flow statement
+term_debt_issuance,,term debt issuance,[contains 'debt' and (contains 'issuance' or contains 'proceeds')] not [contains 'short-term' or contains 'long-term'],cash flow statement
+term_debt_repayment,,term debt repayment,[contains 'debt' and (contains 'repayment' or contains 'repayments')] not [contains 'short-term' or contains 'long-term'],cash flow statement
+change_in_term_debt,,change in term debt,[contains 'debt' and (contains 'change' or contains 'changes')] not  [contains 'short-term' or contains 'long-term'],cash flow statement
+finance_lease_repayment,,finance lease repayment,[(contains 'finance lease' or contains 'finance leases') and (contains 'repayment' or contains 'repayments' or contains 'principal')],cash flow statement
+financing_obligations_repayment,,financing obligations repayment,[(contains 'financing obligation' or contains 'financing obligations') and (contains 'repayment' or contains 'repayments' or contains 'principal')],cash flow statement
+net_stock_issuance,,net stock issuance,[contains 'net stock issuance'],cash flow statement
+net_common_stock_issuance,,net common stock issuance,[contains 'net' ] and [contains 'common stock' or contains 'common stocks'] and [contains 'issuance' or contains 'proceeds'],cash flow statement
+common_stock_issuance,,common stock issuance,[(contains 'common stock' or contains 'common stocks' or contains 'shares') and (contains 'issuance' or contains 'issued' or contains 'proceeds')] not [contains 'net'],cash flow statement
+taxes_on_share_settlement,,taxes on share settlement,[(contains 'tax' or contains 'taxes') and (contains 'share' or contains 'shares') and (contains 'settlement' or contains 'vesting')],cash flow statement
+net_preferred_stock_issuance,,net preferred stock issuance,[contains 'net' ] and [contains 'preferred stock' or contains 'preferrd stocks'] and [contains 'issuance' or contains 'proceeds'],cash flow statement
+preferred_stock_issuance,,preferred stock issuance,[(contains 'preferred stock'  or contains 'preferred stocks') and (contains 'issuance' or contains 'proceeds'] not [ contains 'net'],cash flow statement
+common_stock_repurchased,,common stock repurchased,[(contains 'treasury'  or contains 'share' or contains 'stock' or contains 'stocks') and (contains 'purchases' or contains 'purchase')] or [contains 'repurchase' or contains 'repurchases' or contains 'repurchased'],cash flow statement
+proceeds_from_issuance_of_stock_sp,,proceeds from issuance of stock special purpose,[(contains 'treasury stock' or contains 'treasury stocks') and (contains 'issuance' or contains 'proceeds')] or [contains 'proceeds' and  contains 'options'] or [contains 'proceeds' and contains 'compensation'],cash flow statement
+dividends_paid,,dividends paid,[contains 'dividends'] not [contains 'common' or contains 'preferred'],cash flow statement
+common_dividends_paid,,common dividends paid,[(contains 'dividends' or contains 'dividend') and contains 'common'] not [contains 'preferred'],cash flow statement
+preferred_dividends_paid,,preferred dividends paid,[(contains 'dividends' or contains 'dividend') and contains 'preferred'] not [contains 'common'],cash flow statement
+issuance_costs,,issuance costs,[contains 'issuance costs'],cash flow statement
+other_financing_activities,,other financing activities,[(contains 'other' or contains 'others') and contains 'financing']  and [(contains 'other' or contains 'others') and {position line is smaller than that of  net cash provided by investing activities by one or two)] plus [any other items not fitting into investing activities},cash flow statement
+net_cash_provided_by_financing_activities,,net cash provided by financing activities,[contains 'cash' and contains 'financing'] not [contains 'other' or  contains 'others'],cash flow statement
+effect_of_foreign_exchanges_rate_changes_on_cash,,effect of foreign exchanges rate changes on cash,[contains 'exchange' or contains 'foreign currency' or contains 'foreign currencies'],cash flow statement
+net_change_in_cash,,net change in cash,[(contains 'net change' or contains 'net increase' or contains 'net decrease' or contains 'increase' or contains 'decrease') and contains 'cash'] not [contains 'operating' or contains 'investing' or contains 'financing'],cash flow statement
+cash_at_end_of_period,,cash at end of period,[contains 'cash' and contains 'end'],cash flow statement
+cash_at_beginning_of_period,,cash at beginning of period,[contains 'cash' and contains 'beginning'],cash flow statement
+operating_cash_flow,[net_cash_provided_by_operating_activities],operating cash flow,,cash flow statement
+capital_expenditure,[investments_in_property_plant_and_equipment+proceeds_from_sales_of_ppe],capital expenditure,,cash flow statement
+free_cash_flow,[net_cash_provided_by_operating_activities+net cash provided by investing activities],free cash flow,,cash flow statement
+income_taxes_paid,,income taxes paid,[contains 'income  taxes' and (contains 'payments' or contains 'payment' or contains 'paid')] ,cash flow statement
+interest_paid,,interest paid,[(contains 'payments' or contains 'payment' or contains 'paid') and (contains 'interest' or contains 'interests')],cash flow statement

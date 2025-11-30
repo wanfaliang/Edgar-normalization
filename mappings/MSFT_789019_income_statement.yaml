@@ -1,0 +1,48 @@
+company:
+  cik: '789019'
+  name: MICROSOFT CORP
+  ticker: MSFT
+filing:
+  adsh: 0000950170-24-118967
+  dataset: 2024Q4
+statement: income_statement
+mappings:
+  Revenue:
+    target: revenue
+    confidence: 1.0
+  Cost of revenue:
+    target: cost_of_revenue
+    confidence: 1.0
+  Gross margin:
+    target: gross_profit
+    confidence: 1.0
+  Research and development:
+    target: research_and_development_expenses
+    confidence: 1.0
+  Sales and marketing:
+    target: sales_and_marketing_expenses
+    confidence: 1.0
+  General and administrative:
+    target: general_and_administrative_expenses
+    confidence: 1.0
+  Operating income:
+    target: operating_income
+    confidence: 1.0
+  Other income (expense), net:
+    target: total_other_income_expenses_net
+    confidence: 1.0
+  Income before income taxes:
+    target: income_before_tax
+    confidence: 1.0
+  Provision for income taxes:
+    target: income_tax_expense
+    confidence: 1.0
+  Net income:
+    target: net_income
+    confidence: 1.0
+  Basic:
+    target: weighted_average_shares_outstanding
+    confidence: 0.95
+  Diluted:
+    target: weighted_average_shares_outstanding_diluted
+    confidence: 0.95

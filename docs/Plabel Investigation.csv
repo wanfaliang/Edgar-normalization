@@ -1,0 +1,56 @@
+﻿Field Names in DB,Target,Common Variations,Statements
+cash_and_cash_equivalents,cash and cash equivalents,cash,balance sheet
+short_term_investments,short_term investments,marketable securities; marketable debt securities; short-term marketable securities,balance sheet
+cash_and_short_term_investments,cash and short term investment,total cash and short-term investments,balance sheet
+account_receivables_net,"account receivables, net",trade receivables; trade accounts receivable; accounts and notes receivable; receivables,balance sheet
+other_receivables,other receivables,,balance sheet
+inventory,inventory,inventories;  total inventories; merchandise inventory; materials and supplies,balance sheet
+prepaids,prepaids,prepayments; prepaid expenses,balance sheet
+other_current_assets,other current assets,,balance sheet
+total_current_assets,total current assets,,balance sheet
+long_term_investments,long term investments,investments; marketable securities; Long-term marketable securities,balance sheet
+property_plant_equipment_ne,property plant equipment net,Property and equipment; Premises and equipment; property,balance sheet
+finance_lease_right_of_use_assets,finance lease right of use assets,right of use assets,balance sheet
+operating_lease_ right_of_use _ssets,operating lease right-of-use assets,,balance sheet
+intangible_assets,intangible assets,,balance sheet
+goodwill,goodwill,,balance sheet
+goodwill_and_intangible_assets,goodwill and intangible assets,,balance sheet
+deferred_tax_assets,tax assets,deferred income tax assets; deferred tax assets; deferred taxes on income,balance sheet
+other_non_current_assets,other non current assets,,balance sheet
+total_non_current_assets,total non current assets,,balance sheet
+total_assets,total assets,assets,balance sheet
+account_payables,account payables,accounts payable,balance sheet
+other_payables,other payables,,balance sheet
+accrued_expenses,accrued expenses,accrued liabilities,balance sheet
+accrued_payroll,accrued payroll,"accrued employment costs; salaries, benefits and payroll taxes; accrued compensation and related benefits; accrued wages and withholdings",balance sheet
+short_term_debt,short-term debt,"short-term borrowings; loans; loans and notes payable; Current maturities of debt; notes payable and other borrowings, current; debt due within one year; long-term debt due within one year; ",balance sheet
+current_portion_of_long_term_debt,current portion of long-term debt,current maturities of long-term debt; ,balance sheet
+finance_lease_obligations_current,capital lease obligations current,capital lease obligations current; current portion of finance lease liabilities,balance sheet
+operating_lease_obligations_current,operating lease obligations current,current portion of operating lease liabilities; current maturities of operating leases,balance sheet
+tax_payables,tax payables,accrued income taxes,balance sheet
+deferred_revenue,deferred revenue,unearned revenue; unexpired subscriptions revenue; unearned premiums; unearned fees; ,balance sheet
+other_current_liabilities,other current liabilities,,balance sheet
+total_current_liabilities,total current liabilities,,balance sheet
+long_term_debt,long term debt,"notes payable and other borrowings, non-current; debt due after one year",balance sheet
+pension_and_postretirement_benefits,pension and postretirement benefits,accrued pension liabilities; pension and postretirement benefits obligation,balance sheet
+deferred_revenue_non_current,deferred revenue non-current,"deferred revenue long-term; long-term unearned revenue; deferred revenue, net of current portion",balance sheet
+deferred_tax_liabilities_non_current,deferred tax liabilities non-current,deferred income taxes; deferred taxes on income,balance sheet
+finance_lease_obligations_non_current,finance lease obligations non-current,capital lease obligations non-current,balance sheet
+operating_lease_obligations_non_current,operating lease obligations non-current,long-term operating lease liabilities; ,balance sheet
+operating_lease_liabilities,operating lease liabilities,,balance sheet
+commitments_and_contingencies,commitments and contingencies,,balance sheet
+other_non_current_liabilities,other non-current liabilities,,balance sheet
+total_non_current_liabilities,total non-current liabilities,,balance sheet
+treasury_stock,treasury stock,"treasury stock, at cost",balance sheet
+preferred_stock,preferred stock,"preferred stock, at cost; preferred stock, par value",balance sheet
+common_stock,common stock,"common stock, at cost; common stock cost; common stock, par value",balance sheet
+retained_earnings,retained earnings,accumulated deficit; accumulated earnings; retained earnings (accumulated deficit),balance sheet
+additional_paid_in_capital,additional paid in capital,capital in excess of par value of shares; capital in excess of par value,balance sheet
+accumulated_other_comprehensive_income_loss,accumulated other comprehensive income loss,"accumulated other comprehensive loss; accumulated other comprehensive income, accumulated other comprehensive income (loss); Accumulated other comprehensive income/(loss); ",balance sheet
+other_total_stockholders_equity,other total stockholders equity,,balance sheet
+total_stockholders_equity,total stockholders equity,"total stockholders' equity; total shareholders equity, total shareholders' equity;  total shareowners' equity; total shareowners equity; ",balance sheet
+total_equity,total equity,,balance sheet
+redeemable_non_controlling_interests,redeemable non-controlling interests,redeemable noncontrolling interests in subsidiaries,balance sheet
+minority_interest,minority interest,noncontrolling interest; noncontrolling interests; noncontrolling interests in subsidiaries,balance sheet
+total_liabilities_and_total_equity,total liabilities and total equity,total liabilities and equity; total liabilities and shareholders' equity; total liabilities and shareholders equity; total liabilities and stockholders' equity; total liabilities and stockholders equity; total liabilities and shareowners' equity; total liabilities and shareowners equity; ,balance sheet
+,,,

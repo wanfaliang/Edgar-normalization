@@ -1,0 +1,146 @@
+# Amazon.com Inc - Balance Sheet Assets Mapping
+# CIK: 1018724
+# Generated: 2025-11-18
+# Source: 2024Q2 10-Q (ADSH: 0001018724-24-000083)
+#
+# Mapping Amazon's balance sheet asset items to standardized schema
+
+company:
+  cik: "1018724"
+  name: "Amazon.com Inc"
+  ticker: "AMZN"
+
+# Asset Mappings
+assets:
+  # ========== CURRENT ASSETS ==========
+
+  "Cash and cash equivalents":
+    target: cash_and_cash_equivalents
+    confidence: 1.0
+    notes: "Direct match - no ambiguity"
+
+  "Marketable securities":
+    target: short_term_investments
+    confidence: 1.0
+    notes: "Marketable securities (current) are short-term investments"
+
+  "Inventories":
+    target: inventory
+    confidence: 1.0
+    notes: "Direct match (singular vs plural is semantic)"
+
+  "Accounts receivable, net and other":
+    target: net_receivables
+    confidence: 0.9
+    notes: "Contains both receivables and 'other' - primarily receivables. The 'and other' portion likely includes prepaids and other current assets but is not broken out separately."
+    alternative_targets:
+      - accounts_receivables
+      - other_receivables
+
+  "Total current assets":
+    target: total_current_assets
+    confidence: 1.0
+    notes: "Direct match - control/total item"
+
+  # ========== NON-CURRENT ASSETS ==========
+
+  "Property and equipment, net":
+    target: property_plant_equipment_net
+    confidence: 1.0
+    notes: "PP&E net of depreciation. Amazon's tag confirms this includes finance lease ROU assets."
+
+  "Operating leases":
+    target: other_non_current_assets
+    confidence: 0.8
+    notes: "Operating lease right-of-use asset (ASC 842). Not PP&E owned by Amazon, but a lease asset. Best fits 'other_non_current_assets' since it's not goodwill, intangibles, or investments."
+
+  "Goodwill":
+    target: goodwill
+    confidence: 1.0
+    notes: "Direct match"
+
+  "Other assets":
+    target: other_non_current_assets
+    confidence: 0.9
+    notes: "Catch-all for non-current assets not classified elsewhere. Likely contains: intangible assets (net), long-term investments, deferred tax assets, etc."
+    likely_contains:
+      - intangible_assets
+      - long_term_investments
+      - tax_assets
+
+  "Total assets":
+    target: total_assets
+    confidence: 1.0
+    notes: "Direct match - top-level control total"
+
+# ========== UNMAPPED SCHEMA ITEMS ==========
+# Items in your schema that Amazon doesn't report separately
+
+unmapped_schema_items:
+  cash_and_short_term_investments:
+    status: "not_reported_separately"
+    calculation: "cash_and_cash_equivalents + short_term_investments"
+    note: "Can be derived by summing the two separate items"
+
+  accounts_receivables:
+    status: "included_in_other_item"
+    source: "Accounts receivable, net and other"
+    note: "Amazon doesn't break out trade receivables separately from other receivables"
+
+  other_receivables:
+    status: "included_in_other_item"
+    source: "Accounts receivable, net and other"
+    note: "Included in the same line as accounts receivable"
+
+  prepaids:
+    status: "included_in_other_item"
+    source: "Accounts receivable, net and other"
+    note: "Likely included in the 'and other' portion"
+
+  other_current_assets:
+    status: "included_in_other_item"
+    source: "Accounts receivable, net and other"
+    note: "The 'and other' portion covers various other current assets"
+
+  intangible_assets:
+    status: "included_in_other_item"
+    source: "Other assets"
+    note: "Amazon doesn't separately report intangibles (likely immaterial or included in Other assets)"
+
+  goodwill_and_intangible_assets:
+    status: "partial"
+    calculation: "goodwill + (intangible_assets from Other assets)"
+    note: "Goodwill is separate, intangibles are not broken out"
+
+  long_term_investments:
+    status: "included_in_other_item"
+    source: "Other assets"
+    note: "Non-marketable equity investments likely in Other assets"
+
+  tax_assets:
+    status: "included_in_other_item"
+    source: "Other assets"
+    note: "Deferred tax assets likely in Other assets"
+
+  total_non_current_assets:
+    status: "not_reported_separately"
+    calculation: "total_assets - total_current_assets"
+    note: "Can be derived"
+
+# ========== MAPPING SUMMARY ==========
+summary:
+  total_plabels: 10
+  directly_mapped: 7
+  mapped_with_notes: 3
+  coverage: "10/20 schema items (50%)"
+  notes: |
+    Amazon uses a simplified balance sheet structure with fewer line items.
+    Many granular items from the standardized schema are aggregated into:
+    - "Accounts receivable, net and other" (contains receivables, prepaids, other current)
+    - "Other assets" (contains intangibles, LT investments, tax assets, etc.)
+
+    This is common for large tech companies - they prioritize simplicity over detail.
+    The mapping is reliable for the items that are reported.
+
+  data_quality: "HIGH"
+  confidence_average: 0.95
