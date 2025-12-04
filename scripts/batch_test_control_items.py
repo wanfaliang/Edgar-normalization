@@ -1,11 +1,36 @@
 """
 Batch Test Control Items
 =========================
-Test control item identification across 50 companies.
-Generates Excel report with results matrix.
+Test control item identification across companies for a specific fiscal period.
+Queries database for filings, tests control items, and generates:
+1. Excel report with control item test results matrix (5 sheets: Summary, BS, IS, CF, Failed Items)
+2. Folder with individual company financial statement Excel files
 
 Usage:
-    python scripts/batch_test_control_items.py
+    # Test all 50 default companies for 2024 Q2
+    python scripts/batch_test_control_items.py --year 2024 --quarter 2
+
+    # Filter by form type (10-Q or 10-K)
+    python scripts/batch_test_control_items.py --year 2024 --quarter 4 --form 10-K
+
+    # Test specific companies by ticker
+    python scripts/batch_test_control_items.py --year 2024 --quarter 2 --ticker MSFT AAPL AMZN
+
+    # Test specific companies by CIK
+    python scripts/batch_test_control_items.py --year 2024 --quarter 2 --cik 789019 320193
+
+Required Arguments:
+    --year YYYY         Fiscal year (e.g., 2024)
+    --quarter {1,2,3,4} Fiscal quarter
+
+Optional Arguments:
+    --form {10-Q,10-K}  Filter by form type
+    --ticker [TICKERS]  Test specific tickers (space-separated)
+    --cik [CIKS]        Test specific CIKs (space-separated)
+
+Output:
+    output/results/control_items_test_TIMESTAMP.xlsx        Test results matrix
+    output/results/control_items_test_TIMESTAMP/            Folder with individual company statements
 """
 
 import sys
@@ -432,7 +457,7 @@ def main():
 
                 # Save to statements folder
                 wb = create_excel_workbook(fs_results, company['company_name'], company['ticker'])
-                statement_file = statements_folder / f"{company['ticker']}_{cik}_financial_statements.xlsx"
+                statement_file = statements_folder / f"{company['ticker']}_{timestamp}_financial_statements.xlsx"
                 wb.save(statement_file)
                 print(f"✓ Statements saved")
 

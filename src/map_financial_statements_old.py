@@ -1,3 +1,10 @@
+# This is to keep the old version of map_financial_statements.py for reference.
+# The new version is in map_financial_statements.py
+# The differences are mainly in the mapping logic and aggregation of the other itmes.
+# Please refer to map_financial_statements.py for the latest code.
+# This file is no longer maintained.
+# The time stamp of these comments is 2025-11-30 7:01 PM LOS ANGELES TIME
+# ==========================================================================
 """
 Financial Statements Mapper
 ===========================
@@ -15,6 +22,7 @@ Features:
 Usage:
     python map_financial_statements.py --cik 789019 --adsh 0000950170-24-118967
 """
+
 
 import sys
 import argparse
@@ -145,11 +153,10 @@ def classify_bs_section(line_num, control_lines):
         return 'equity_total'
 
 
-def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''):
+def map_bs_item(plabel, line_num, control_lines, tag=''):
     """Map a balance sheet line item to standardized target"""
     p = normalize(plabel)
     t = tag.lower()  # Lowercase tag for pattern matching
-    dt = datatype.lower() if datatype else ''  # Lowercase datatype for matching
 
     # Get control line numbers
     total_current_assets = control_lines.get('total_current_assets', float('inf'))
@@ -182,15 +189,15 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
     # CURRENT ASSETS
     if line_num <= total_current_assets:
         # CSV line 4: cash and short-term investments (combined - check FIRST before separates)
-        if 'cash and short term' in p:
+        if 'cash and short-term' in p or 'cash and short term' in p:
             return 'cash_and_short_term_investments'
         # CSV line 2: [contains 'cash'] not [contains 'restricted'] not [contains 'cash and short-term investments']
-        if ('cash' in p and 'restricted cash' != p) and ('total cash cash equivalents and marketable securities' != p) and ('total cash cash equivalents and short term investments' != p) :
+        if 'cash' in p and 'restricted' not in p:
             return 'cash_and_cash_equivalents'
         # CSV line 3: [short-term AND investments] OR [marketable AND securities] OR [marketable AND investments]
-        if (( 'investment' in p) or \
+        if (('short-term' in p or 'short term' in p or 'shortterm' in p) and 'investment' in p) or \
            ('marketable' in p and 'securities' in p) or \
-           ('marketable' in p and 'investment' in p) or ('investment' in p and 'securit' in p)) and ('total cash cash equivalents and marketable securities' != p) and ('total cash cash equivalents and short term investments' != p):
+           ('marketable' in p and 'investment' in p):
             return 'short_term_investments'
         # CSV line 5: min{[trade AND receivable] OR [accounts AND receivable] OR [notes AND receivable]}
         if ('trade' in p and ('receivable' in p or 'receivables' in p)) or \
@@ -202,7 +209,7 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             return 'other_receivables'
         # CSV line 7: [inventory OR inventories] OR ([materials and supplies] NOT [inventory])
         if ('inventory' in p or 'inventories' in p) or \
-           ('materials and supplies' in p and "inventorynet" in tag):
+           ('materials and supplies' in p and 'inventory' not in p and 'inventories' not in p):
             return 'inventory'
         if 'prepaid' in p:
             return 'prepaids'
@@ -212,7 +219,7 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
 
     # NON-CURRENT ASSETS
     elif line_num <= total_assets:
-        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p or 'fixed assets' in p) and ('net' in p or 'less' in p)) and ('gross' not in tag and 'gross' not in p and 'cost' not in p and 'cost' not in p):
+        if ('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p) and ('net' in p or 'property plant and equipment' in p):
             return 'property_plant_equipment_net'
         if ('investment' in p or 'marketable securities' in p) and line_num > total_current_assets:
             return 'long_term_investments'
@@ -231,57 +238,50 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             return 'operating_lease_right_of_use_assets'
         if 'deferred' in p and 'tax' in p and line_num < total_assets:
             return 'deferred_tax_assets'
-        # REMOVED: total_assets pattern - control items mapped by line number only (line 168-169)
+        if p in ['total assets', 'assets total'] or ('total' in p and 'asset' in p and 'current' not in p):
+            return 'total_assets'
         # REMOVED: other_non_current_assets pattern (now calculated as residual)
 
     # LIABILITIES AND EQUITY (after total_assets)
     elif line_num > total_assets:
-        # Special case: CommonStock tags with negating=1 are treasury stock
-        if ('commonstock' in t or 'commonshare' in t):
-            negating_str = str(negating).strip().upper() if negating else ""
-            if negating in (1, True) or negating_str in ("1", "TRUE"):
-                return 'treasury_stock'
-
         # Try EQUITY patterns first (most specific)
         # CSV line 44: [(common stock OR common stocks OR common shares OR common share) AND (cost OR par)]
-        # Also match by tag for edge cases - MUST be monetary datatype
-        if 'monetary' in dt and (((('common stock' in p or 'common stocks' in p or 'common share' in p or 'common shares' in p) and
+        # Also match by tag for edge cases
+        if ((('common stock' in p or 'common stocks' in p or 'common share' in p or 'common shares' in p) and
              ('cost' in p or 'par' in p or 'issued' in p) and
-             ('treasury' not in p and 'purchase' not in p)) or
-            (('commonstock' in t or 'commonshare' in t) and ('additional' not in p and 'paid in' not in p and 'excess' not in p and 'surplus' not in p and 'treasury' not in p and 'purchase' not in p))) or ('common stock' == p) or ('common stocks' == p)or ('common shares' == p) or ('common share' == p)):
+             ('treasury' not in p)) or
+            (('commonstock' in t or 'commonshare' in t) and ('additional' not in p and 'excess' not in p))) or ('common stock' == p) or ('common stocks' == p)or ('common shares' == p) or ('common share' == p):
             return 'common_stock'
         # CSV line 43: [(preferred stock OR preferred stocks) AND (cost OR par)]
-        if (('preferred stock' in p or 'preferred stocks' in p) and ('cost' in p or 'par' in p)) or ('preferred stock' == p) or ('preferred stocks' == p):
+        if ('preferred stock' in p or 'preferred stocks' in p) and ('cost' in p or 'par' in p):
             return 'preferred_stock'
         # CSV line 46: [(additional OR excess) AND (capital OR proceeds OR fund)]
-        if ('additional' in p or 'paid in' in p or 'excess' in p or 'surplus' in p) and \
-           ('capital' in p or 'proceeds' in p or 'fund' in p or 'amount' in p)  :
+        if ('additional' in p or 'excess' in p) and \
+           ('capital' in p or 'proceeds' in p or 'fund' in p):
             return 'additional_paid_in_capital'
         # CSV line 45: [(accumulated OR retained) AND (earnings AND deficit)]
         # Note: CSV shows "AND" but likely means "OR" for earnings/deficit
-        if ('accumulated' in p or 'retained' in p or 'employed' in p or 'reinvest' in p) and ('earning' in p or 'deficit' in p or 'profit' in p):
+        if ('accumulated' in p or 'retained' in p or 'employed' in p) and ('earning' in p or 'deficit' in p or 'profit' in p):
             return 'retained_earnings'
         # CSV line 47: [accumulated AND other AND comprehensive]
-        # Check tag first - some total_equity items have similar plabels
         if 'accumulated' in p and 'other' in p and 'comprehensive' in p:
-            if 'stockholdersequityincludingportionattributabletononcontrolling' in t:
-                return 'total_equity'
             return 'accumulated_other_comprehensive_income_loss'
         # CSV line 42: [(treasury stock OR treasury stocks) AND (cost OR par)]
-        if (('treasury' in p or 'purchase' in p) and('stock' in p or 'share' in p)) or ('esop' in p or 'option' in p ) :
+        if 'treasury' in p and('stock' in p or 'share' in p) and ('cost' in p or 'par' in p):
             return 'treasury_stock'
         # CSV: [contains 'noncontrolling interests in subsidiaries']
         if 'noncontrolling interests in subsidiaries' in p:
             return 'redeemable_non_controlling_interests'
         if 'noncontrolling' in p or 'non controlling' in p or 'minority interest' in p:
             return 'minority_interest'
-        if  ('stockholder' in p or 'shareholder' in p or 'owner' in p) and ('equity' in p or 'deficit' in p) and 'liabilit' not in p:
+        if 'total' in p and ('stockholder' in p or 'shareholder' in p) and 'equity' in p and 'liabilit' not in p:
             return 'total_stockholders_equity'
         # REMOVED: other_total_stockholders_equity pattern (now calculated as residual)
         # CSV: [equals to 'total equity' or equals to 'equity, total']
-        if p in ['total equity', 'equity total', 'equity, total', 'total deficit']:
+        if p in ['total equity', 'equity total', 'equity, total']:
             return 'total_equity'
-        # REMOVED: total_liabilities_and_total_equity pattern - control items mapped by line number only (line 178-179)
+        if 'total' in p and 'liabilit' in p and 'equity' in p:
+            return 'total_liabilities_and_total_equity'
 
         # Then try LIABILITY patterns
         # Current liabilities
@@ -292,20 +292,20 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                 return 'accrued_payroll'
             if 'accrued' in p and not any(x in p for x in ['employment', 'compensation', 'wages', 'salaries', 'payroll', 'tax', 'taxes']):
                 return 'accrued_expenses'
-            # CSV line 30: [unearned OR unexpired] - Check BEFORE short_term_debt to avoid broad "current portion" match
+            # CSV line 26: [(borrowings OR debt OR notes OR loan OR loans) NOT (long-term)] OR [(one year OR long-term) AND within] OR [current maturities OR current portion]
+            if (('borrowing' in p or 'borrowings' in p or 'debt' in p or 'note' in p or 'notes' in p or 'loan' in p or 'loans' in p) and
+                'long-term' not in p and 'long term' not in p) or \
+               (('one year' in p or 'long-term' in p or 'long term' in p) and 'within' in p) or \
+               (('current maturities' in p or 'current portion' in p) and 'lease' not in p):
+                return 'short_term_debt'
+            # CSV line 30: [unearned OR unexpired]
             if ('unearned' in p or 'unexpired' in p) or ('deferred' in p and ('income' in p or 'revenue' in p)) or ('advance' in p):
                 return 'deferred_revenue'
-            # CSV line 26: [(borrowings OR debt OR notes OR loan OR loans) NOT (long-term)] OR [(one year OR long-term) AND within] OR [current maturities OR current portion]
-            if (('borrowing' in p or 'borrowings' in p or 'debt' in p or  'notes' in p or 'loan' in p or 'loans' in p) and
-                'long-term' not in p and 'long term' not in p) or \
-               ((('one year' in p or 'long-term' in p or 'long term' in p) and 'within' in p) and 'lease' not in p) or \
-               (('current maturities' in p or 'current portion' in p or 'current installment' in p) and 'lease' not in p):
-                return 'short_term_debt'
             # CSV line 29: [(payables OR payable) AND income taxes]
             if ('payable' in p or 'accrued') and ('income' in p and 'tax' in p):
                 return 'tax_payables'
             # CSV line 27: [current OR short-term] AND [(finance OR capital) AND (lease OR leases OR right of use OR rou)] AND [position_after # total_assets]
-            if \
+            if ('current' in p or 'short term' in p or 'short-term' in p) and \
                ('finance' in p or 'capital' in p) and \
                ('lease' in p or 'leases' in p or 'right of use' in p or 'rou' in p):
                 return 'finance_lease_obligations_current'
@@ -321,9 +321,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             if (('note payable' in p or 'notes payable' in p) or 'borrowing' in p or 'debt' in p) and line_num > total_current_liabilities:
                 return 'long_term_debt'
             # Also capture "term debt" after total_current_liabilities
-            if 'term debt' in p or 'long term obligation' in p:
+            if 'term debt' in p:
                 return 'long_term_debt'
-            if ('pension' in p or 'retirement' in p or 'employ' in p) and ('liabilit' in p or 'obligation' in p or 'benefit' in p):
+            if ('pension' in p or 'retirement' in p or 'employ' in p) and ('liabilit' in p or 'obligation' in p):
                 return 'pension_and_postretirement_benefits'
             if ('deferred revenue' in p or 'unearned' in p) and line_num > total_current_liabilities:
                 return 'deferred_revenue_non_current'
@@ -1031,9 +1031,7 @@ def map_statement(stmt_type, line_items, control_lines):
         if stmt_type == 'BS':
             section = classify_bs_section(line_num, control_lines)
             tag = item.get('tag', '')
-            negating = item.get('negating', item.get('NEGATING', 0))
-            datatype = item.get('datatype', '')
-            target = map_bs_item(plabel, line_num, control_lines, tag, negating, datatype)
+            target = map_bs_item(plabel, line_num, control_lines, tag)
             # REMOVED: auto-assignment logic (other_* now calculated as residuals)
 
         elif stmt_type == 'IS':
@@ -1067,30 +1065,6 @@ def map_statement(stmt_type, line_items, control_lines):
                 'section': section
             })
             target_to_plabels[target].append((plabel, line_num))
-
-    # Special handling for total_stockholders_equity: if multiple items match,
-    # the one with smaller line number is total_stockholders_equity,
-    # the one(s) with greater line number(s) are total_equity
-    if stmt_type == 'BS' and 'total_stockholders_equity' in target_to_plabels:
-        items = target_to_plabels['total_stockholders_equity']
-        if len(items) >= 2:
-            # Sort by line number
-            items_sorted = sorted(items, key=lambda x: x[1])
-            # Keep first (smallest line_num) as total_stockholders_equity
-            target_to_plabels['total_stockholders_equity'] = [items_sorted[0]]
-            # Move rest to total_equity
-            if 'total_equity' not in target_to_plabels:
-                target_to_plabels['total_equity'] = []
-            target_to_plabels['total_equity'].extend(items_sorted[1:])
-            # Update mappings list
-            for i, mapping in enumerate(mappings):
-                if mapping['target'] == 'total_stockholders_equity':
-                    plabel_match = mapping['plabel']
-                    # Find line_num for this plabel in items_sorted
-                    for plabel, line_num in items_sorted[1:]:
-                        if plabel == plabel_match:
-                            mappings[i]['target'] = 'total_equity'
-                            break
 
     return mappings, target_to_plabels
 
@@ -1380,10 +1354,10 @@ def get_balance_sheet_structure():
         {'type': 'blank'},
         {'type': 'major_section', 'label': 'LIABILITIES AND STOCKHOLDERS\' EQUITY'},
         {'type': 'section_header', 'label': 'Current Liabilities'},
-        {'type': 'item', 'field': 'short_term_debt', 'label': 'Short-term debt', 'indent': 1},
         {'type': 'item', 'field': 'account_payables', 'label': 'Accounts payable', 'indent': 1},
         {'type': 'item', 'field': 'accrued_payroll', 'label': 'Accrued compensation', 'indent': 1},
         {'type': 'item', 'field': 'accrued_expenses', 'label': 'Accrued expenses', 'indent': 1},
+        {'type': 'item', 'field': 'short_term_debt', 'label': 'Short-term debt', 'indent': 1},
         {'type': 'item', 'field': 'deferred_revenue', 'label': 'Deferred revenue', 'indent': 1},
         {'type': 'item', 'field': 'tax_payables', 'label': 'Income taxes payable', 'indent': 1},
         {'type': 'item', 'field': 'finance_lease_obligations_current', 'label': 'Finance lease liabilities - current', 'indent': 1},
@@ -1853,30 +1827,31 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
         print(f"   ✅ {len(bs_result['line_items'])} items, {len(bs_result.get('periods', []))} periods")
         control_lines = find_bs_control_items(bs_result['line_items'])
         mappings, target_to_plabels = map_statement('BS', bs_result['line_items'], control_lines)
-        standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'])
+        standardized = aggregate_by_target(target_to_plabels, bs_result['line_items'])
 
         # Validate and calculate residual other_* items
-        standardized, status = validate_and_calculate_bs_residuals(standardized_base, control_lines, sic_code=None)
+        standardized, status = validate_and_calculate_bs_residuals(standardized, control_lines, sic_code=None)
         if standardized is None:
-            print(f"   ⚠️  Validation failed: {status} - exporting anyway for debugging")
-            standardized = standardized_base  # Use pre-validation data
+            print(f"   ⚠️  Validation failed: {status}")
         else:
             print(f"   ✅ Validation: {status}")
 
-        # Always export balance sheet, even if validation failed
-        coverage = len(mappings) / len(bs_result['line_items']) * 100 if bs_result['line_items'] else 0
-        print(f"   📊 Mapped: {len(mappings)}/{len(bs_result['line_items'])} ({coverage:.1f}%)")
-        print(f"   🎯 Unique targets: {len(standardized)}")
+        if standardized:
+            coverage = len(mappings) / len(bs_result['line_items']) * 100 if bs_result['line_items'] else 0
+            print(f"   📊 Mapped: {len(mappings)}/{len(bs_result['line_items'])} ({coverage:.1f}%)")
+            print(f"   🎯 Unique targets: {len(standardized)}")
 
-        results['balance_sheet'] = {
-            'line_items': bs_result['line_items'],
-            'periods': bs_result.get('periods', []),
-            'mappings': mappings,
-            'standardized': standardized,
-            'control_items': control_lines,
-            'metadata': bs_result.get('metadata', {}),
-            'validation_status': status
-        }
+            results['balance_sheet'] = {
+                'line_items': bs_result['line_items'],
+                'periods': bs_result.get('periods', []),
+                'mappings': mappings,
+                'standardized': standardized,
+                'control_items': control_lines,
+                'metadata': bs_result.get('metadata', {}),
+                'validation_status': status
+            }
+        else:
+            print(f"   ❌ Balance Sheet skipped due to validation failure")
 
     # Map Income Statement
     print(f"\n📋 Reconstructing Income Statement...")
