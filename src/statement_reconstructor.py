@@ -67,6 +67,10 @@ class StatementNode:
     children: List['StatementNode'] = field(default_factory=list)
     parent: Optional['StatementNode'] = None
 
+    # Calc graph integration (from XBRL calculation linkbase)
+    is_sum: bool = False  # True if this tag is a parent in calc graph
+    calc_children: List[Tuple[str, float]] = field(default_factory=list)  # [(child_tag, weight), ...]
+
     def __repr__(self):
         value_str = f"${self.value:,.0f}" if self.value else "None"
         return f"{'  ' * self.level}{self.plabel} ({self.tag}): {value_str}"
@@ -799,6 +803,62 @@ class StatementReconstructor:
             'warnings': warnings
         }
 
+    def _mark_sum_items(self, hierarchy: StatementNode, calc_graph: Dict) -> int:
+        """
+        Mark nodes that appear as parents in the calc graph as sum items.
+
+        This uses the XBRL calculation linkbase to identify which tags are
+        sum/total items (i.e., they have defined calculation children).
+
+        Args:
+            hierarchy: Root node of statement tree
+            calc_graph: Dict {parent_tag: [(child_tag, weight), ...], ...}
+                       Tags may be prefixed (e.g., 'us-gaap_Assets') or not ('Assets')
+
+        Returns:
+            int: Number of nodes marked as sum items
+        """
+        # Build set of sum tags (both with and without prefix for flexible matching)
+        sum_tags = set(calc_graph.keys())
+
+        # Also add versions without prefix for matching
+        sum_tags_no_prefix = set()
+        for tag in calc_graph.keys():
+            if '_' in tag:
+                # us-gaap_Assets -> Assets
+                sum_tags_no_prefix.add(tag.split('_', 1)[1])
+            else:
+                sum_tags_no_prefix.add(tag)
+
+        marked_count = 0
+
+        def mark_recursive(node: StatementNode):
+            nonlocal marked_count
+
+            # Try exact match first
+            tag = node.tag
+            matched_tag = None
+
+            if tag in sum_tags:
+                matched_tag = tag
+            elif tag in sum_tags_no_prefix:
+                # Find the full prefixed tag
+                for full_tag in calc_graph.keys():
+                    if full_tag.endswith('_' + tag) or full_tag == tag:
+                        matched_tag = full_tag
+                        break
+
+            if matched_tag:
+                node.is_sum = True
+                node.calc_children = list(calc_graph[matched_tag])
+                marked_count += 1
+
+            for child in node.children:
+                mark_recursive(child)
+
+        mark_recursive(hierarchy)
+        return marked_count
+
     def reconstruct_statement(self, cik: int, adsh: str, stmt_type: str = 'BS') -> Dict:
         """
         Main entry point: Reconstruct a financial statement
@@ -847,7 +907,18 @@ class StatementReconstructor:
         # Step 4: Validate
         validation = self.validate_rollups(hierarchy)
 
-        # Step 5: Create flat list with full metadata for each line item
+        # Step 5: Load calc graph and mark sum items
+        calc_graph = {}
+        calc_source = None
+        try:
+            from xbrl_loader import load_calc_graph_with_fallback
+            calc_graph, calc_source = load_calc_graph_with_fallback(cik, adsh)
+            marked_count = self._mark_sum_items(hierarchy, calc_graph)
+            print(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
+        except Exception as e:
+            print(f"  Warning: Could not load calc graph: {e}")
+
+        # Step 6: Create flat list with full metadata for each line item
         line_items = []
 
         def flatten_recursive(node: StatementNode):
@@ -886,7 +957,11 @@ class StatementReconstructor:
                     'tlabel': node.tlabel,
                     'datatype': node.datatype,
                     'iord': node.iord,
-                    'crdr': node.crdr
+                    'crdr': node.crdr,
+
+                    # Calc graph fields (from XBRL calculation linkbase)
+                    'is_sum': node.is_sum,
+                    'calc_children': node.calc_children if node.is_sum else []
                 })
 
             for child in node.children:
@@ -1012,6 +1087,17 @@ class StatementReconstructor:
                 period,
                 stmt_type
             )
+
+        # Step 5b: Load calc graph and mark sum items
+        calc_graph = {}
+        calc_source = None
+        try:
+            from xbrl_loader import load_calc_graph_with_fallback
+            calc_graph, calc_source = load_calc_graph_with_fallback(cik, adsh)
+            marked_count = self._mark_sum_items(hierarchy, calc_graph)
+            print(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
+        except Exception as e:
+            print(f"  Warning: Could not load calc graph: {e}")
 
         # Step 6: Create line_items with multi-period values
         line_items = []
@@ -1173,7 +1259,11 @@ class StatementReconstructor:
                     'tlabel': node.tlabel,
                     'datatype': node.datatype,
                     'iord': node.iord,
-                    'crdr': node.crdr
+                    'crdr': node.crdr,
+
+                    # Calc graph fields (from XBRL calculation linkbase)
+                    'is_sum': node.is_sum,
+                    'calc_children': node.calc_children if node.is_sum else []
                 })
 
             for child in node.children:

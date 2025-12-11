@@ -29,6 +29,12 @@ from openpyxl.utils import get_column_letter
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
 from statement_reconstructor import StatementReconstructor
+from map_financial_statements_strategy2 import (
+    should_use_strategy2,
+    map_balance_sheet_strategy2,
+    calculate_residuals_strategy2,
+    get_balance_sheet_structure_strategy2
+)
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import config
@@ -181,6 +187,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
 
     # CURRENT ASSETS
     if line_num <= total_current_assets:
+        # Cash, cash equivalents and restricted cash (combined) - check FIRST
+        if 'cash' in p and 'restricted' in p:
+            return 'cash_cash_equivalent_and_restricted_cash'
         # CSV line 4: cash and short-term investments (combined - check FIRST before separates)
         if 'cash and short term' in p:
             return 'cash_and_short_term_investments'
@@ -229,6 +238,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             return 'finance_lease_right_of_use_assets'
         if (('operating' in p or 'operation' in p) and ('lease' in p or 'leases' in p or 'right of use' in p or 'rou' in p)):
             return 'operating_lease_right_of_use_assets'
+        # Combined lease assets (catch-all after specific operating/finance patterns)
+        if 'lease' in p or 'right of use' in p or 'rou' in p:
+            return 'lease_assets'
         if 'deferred' in p and 'tax' in p and line_num < total_assets:
             return 'deferred_tax_assets'
         # REMOVED: total_assets pattern - control items mapped by line number only (line 168-169)
@@ -301,8 +313,11 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                ((('one year' in p or 'long-term' in p or 'long term' in p) and 'within' in p) and 'lease' not in p) or \
                (('current maturities' in p or 'current portion' in p or 'current installment' in p) and 'lease' not in p):
                 return 'short_term_debt'
+            # Dividends payable
+            if 'dividend' in p and ('payable' in p or 'liability' in p):
+                return 'dividends_payable'
             # CSV line 29: [(payables OR payable) AND income taxes]
-            if ('payable' in p or 'accrued') and ('income' in p and 'tax' in p):
+            if ('payable' in p or 'accrued' in p or 'liabilit' in p or 'obligation' in p) and 'tax' in p and 'deferred' not in p:
                 return 'tax_payables'
             # CSV line 27: [current OR short-term] AND [(finance OR capital) AND (lease OR leases OR right of use OR rou)] AND [position_after # total_assets]
             if \
@@ -311,6 +326,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                 return 'finance_lease_obligations_current'
             if 'operati' in p and 'lease' in p and (line_num > total_assets and line_num <= total_current_liabilities):
                 return 'operating_lease_obligations_current'
+            # Combined lease obligations current (catch-all after specific operating/finance patterns)
+            if 'lease' in p or 'right of use' in p or 'rou' in p:
+                return 'lease_obligation_current'
             # REMOVED: other_payables pattern (captured in residual)
             if 'total' in p and 'current' in p and 'liabilit' in p:
                 return 'total_current_liabilities'
@@ -329,12 +347,16 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                 return 'deferred_revenue_non_current'
             if 'deferred' in p and 'tax' in p and line_num > total_current_liabilities:
                 return 'deferred_tax_liabilities_non_current'
-            if 'income tax' in p and 'payable' in p and line_num > total_current_liabilities:
-                return 'income_tax_payable_non_current'
+            # Tax payables non-current (broader pattern, replaces income_tax_payable_non_current)
+            if ('payable' in p or 'accrued' in p or 'liabilit' in p or 'obligation' in p) and 'tax' in p and 'deferred' not in p:
+                return 'tax_payables_non_current'
             if ('finance' in p or 'capital' in p) and ('lease' in p or 'leases' in p) and line_num > total_current_liabilities:
                 return 'finance_lease_obligations_non_current'
             if ('operating' in p) and ('lease' in p or 'leases' in p) and line_num > total_current_liabilities:
                 return 'operating_lease_obligations_non_current'
+            # Combined lease obligations non-current (catch-all after specific operating/finance patterns)
+            if 'lease' in p or 'right of use' in p or 'rou' in p:
+                return 'lease_obligation_non_current'
             if 'commitments' in p or 'contingencies' in p:
                 return 'commitments_and_contingencies'
             if p in ['total liabilities', 'liabilities total'] or ('total' in p and 'liabilit' in p and 'current' not in p and 'stockholder' not in p and 'equity' not in p):
@@ -1286,23 +1308,23 @@ def validate_and_calculate_bs_residuals(standardized, control_lines, sic_code=No
     # Define sections and their corresponding total/other fields
     sections = {
         'other_current_assets': ('total_current_assets', [
-            'cash_and_cash_equivalents', 'cash_and_short_term_investments', 'short_term_investments',
-            'account_receivables_net', 'other_receivables', 'inventory', 'prepaids'
+            'cash_and_cash_equivalents', 'cash_and_short_term_investments', 'cash_cash_equivalent_and_restricted_cash',
+            'short_term_investments', 'account_receivables_net', 'other_receivables', 'inventory', 'prepaids'
         ]),
         'other_non_current_assets': ('total_non_current_assets', [
             'property_plant_equipment_net', 'finance_lease_right_of_use_assets',
-            'operating_lease_right_of_use_assets', 'long_term_investments', 'goodwill',
+            'operating_lease_right_of_use_assets', 'lease_assets', 'long_term_investments', 'goodwill',
             'intangible_assets', 'goodwill_and_intangible_assets', 'deferred_tax_assets'
         ]),
         'other_current_liabilities': ('total_current_liabilities', [
             'account_payables', 'accrued_payroll', 'accrued_expenses', 'short_term_debt',
-            'deferred_revenue', 'tax_payables', 'finance_lease_obligations_current',
-            'operating_lease_obligations_current'
+            'deferred_revenue', 'tax_payables', 'dividends_payable', 'finance_lease_obligations_current',
+            'operating_lease_obligations_current', 'lease_obligation_current'
         ]),
         'other_non_current_liabilities': ('total_non_current_liabilities', [
             'long_term_debt', 'pension_and_postretirement_benefits', 'deferred_revenue_non_current',
-            'deferred_tax_liabilities_non_current', 'income_tax_payable_non_current', 'finance_lease_obligations_non_current',
-            'operating_lease_obligations_non_current', 'commitments_and_contingencies'
+            'deferred_tax_liabilities_non_current', 'tax_payables_non_current', 'finance_lease_obligations_non_current',
+            'operating_lease_obligations_non_current', 'lease_obligation_non_current', 'commitments_and_contingencies'
         ])
     }
 
@@ -1358,6 +1380,7 @@ def get_balance_sheet_structure():
         {'type': 'section_header', 'label': 'Current Assets'},
         {'type': 'item', 'field': 'cash_and_cash_equivalents', 'label': 'Cash and cash equivalents', 'indent': 1},
         {'type': 'item', 'field': 'cash_and_short_term_investments', 'label': 'Cash and short-term investments', 'indent': 1},
+        {'type': 'item', 'field': 'cash_cash_equivalent_and_restricted_cash', 'label': 'Cash, cash equivalents and restricted cash', 'indent': 1},
         {'type': 'item', 'field': 'short_term_investments', 'label': 'Short-term investments', 'indent': 1},
         {'type': 'item', 'field': 'account_receivables_net', 'label': 'Accounts receivable, net', 'indent': 1},
         {'type': 'item', 'field': 'other_receivables', 'label': 'Other receivables', 'indent': 1},
@@ -1369,6 +1392,7 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'property_plant_equipment_net', 'label': 'Property, plant and equipment, net', 'indent': 1},
         {'type': 'item', 'field': 'finance_lease_right_of_use_assets', 'label': 'Finance lease right-of-use assets', 'indent': 1},
         {'type': 'item', 'field': 'operating_lease_right_of_use_assets', 'label': 'Operating lease right-of-use assets', 'indent': 1},
+        {'type': 'item', 'field': 'lease_assets', 'label': 'Lease right-of-use assets', 'indent': 1},
         {'type': 'item', 'field': 'long_term_investments', 'label': 'Long-term investments', 'indent': 1},
         {'type': 'item', 'field': 'goodwill', 'label': 'Goodwill', 'indent': 1},
         {'type': 'item', 'field': 'intangible_assets', 'label': 'Intangible assets, net', 'indent': 1},
@@ -1386,8 +1410,10 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'accrued_expenses', 'label': 'Accrued expenses', 'indent': 1},
         {'type': 'item', 'field': 'deferred_revenue', 'label': 'Deferred revenue', 'indent': 1},
         {'type': 'item', 'field': 'tax_payables', 'label': 'Income taxes payable', 'indent': 1},
+        {'type': 'item', 'field': 'dividends_payable', 'label': 'Dividends payable', 'indent': 1},
         {'type': 'item', 'field': 'finance_lease_obligations_current', 'label': 'Finance lease liabilities - current', 'indent': 1},
         {'type': 'item', 'field': 'operating_lease_obligations_current', 'label': 'Operating lease liabilities - current', 'indent': 1},
+        {'type': 'item', 'field': 'lease_obligation_current', 'label': 'Lease liabilities - current', 'indent': 1},
         {'type': 'item', 'field': 'other_payables', 'label': 'Other payables', 'indent': 1},
         {'type': 'item', 'field': 'other_current_liabilities', 'label': 'Other current liabilities', 'indent': 1},
         {'type': 'subtotal', 'field': 'total_current_liabilities', 'label': 'Total Current Liabilities'},
@@ -1396,9 +1422,10 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'pension_and_postretirement_benefits', 'label': 'Pension and postretirement benefits', 'indent': 1},
         {'type': 'item', 'field': 'deferred_revenue_non_current', 'label': 'Deferred revenue, non-current', 'indent': 1},
         {'type': 'item', 'field': 'deferred_tax_liabilities_non_current', 'label': 'Deferred tax liabilities', 'indent': 1},
-        {'type': 'item', 'field': 'income_tax_payable_non_current', 'label': 'Income tax payable, non-current','indent': 1}, 
+        {'type': 'item', 'field': 'tax_payables_non_current', 'label': 'Income tax payable, non-current', 'indent': 1},
         {'type': 'item', 'field': 'finance_lease_obligations_non_current', 'label': 'Finance lease liabilities - non-current', 'indent': 1},
         {'type': 'item', 'field': 'operating_lease_obligations_non_current', 'label': 'Operating lease liabilities - non-current', 'indent': 1},
+        {'type': 'item', 'field': 'lease_obligation_non_current', 'label': 'Lease liabilities - non-current', 'indent': 1},
         {'type': 'item', 'field': 'commitments_and_contingencies', 'label': 'Commitments and contingencies', 'indent': 1},
         {'type': 'item', 'field': 'other_non_current_liabilities', 'label': 'Other non-current liabilities', 'indent': 1},
         {'type': 'subtotal', 'field': 'total_non_current_liabilities', 'label': 'Total Non-Current Liabilities'},
@@ -1601,15 +1628,18 @@ def create_excel_workbook(results, company_name, ticker):
                 ws_meta.cell(row=row_idx, column=col_idx, value=value)
 
     # Define structure for each statement
+    # Check if Strategy 2 was used for balance sheet
+    bs_data = results.get('balance_sheet')
+    use_strategy2_for_bs = bs_data and bs_data.get('strategy') == 'strategy2'
+
     structures = {
-        'Balance Sheet': get_balance_sheet_structure(),
+        'Balance Sheet': get_balance_sheet_structure_strategy2() if use_strategy2_for_bs else get_balance_sheet_structure(),
         'Income Statement': get_income_statement_structure(),
         'Cash Flow': get_cash_flow_structure()
     }
 
     # Conditionally reposition NCI items in Balance Sheet structure
     # If total_equity doesn't exist, move NCI items before total_stockholders_equity
-    bs_data = results.get('balance_sheet')
     if bs_data:
         standardized = bs_data.get('standardized', {})
         if 'total_equity' not in standardized:
@@ -1852,16 +1882,30 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
     if bs_result and bs_result.get('line_items'):
         print(f"   ✅ {len(bs_result['line_items'])} items, {len(bs_result.get('periods', []))} periods")
         control_lines = find_bs_control_items(bs_result['line_items'])
-        mappings, target_to_plabels = map_statement('BS', bs_result['line_items'], control_lines)
-        standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'])
 
-        # Validate and calculate residual other_* items
-        standardized, status = validate_and_calculate_bs_residuals(standardized_base, control_lines, sic_code=None)
-        if standardized is None:
-            print(f"   ⚠️  Validation failed: {status} - exporting anyway for debugging")
-            standardized = standardized_base  # Use pre-validation data
+        # Check if Strategy 2 should be used (unclassified balance sheet)
+        use_strategy2 = should_use_strategy2(control_lines)
+
+        if use_strategy2:
+            print(f"   📌 Using Strategy 2 (unclassified balance sheet - missing total_current_assets or total_current_liabilities)")
+            mappings, target_to_plabels = map_balance_sheet_strategy2(bs_result['line_items'], control_lines)
+            standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'])
+
+            # Calculate residuals for Strategy 2 (other_assets, other_liabilities)
+            standardized = calculate_residuals_strategy2(standardized_base, control_lines)
+            status = "Strategy 2 - unclassified balance sheet"
         else:
-            print(f"   ✅ Validation: {status}")
+            print(f"   📌 Using Strategy 1 (classified balance sheet)")
+            mappings, target_to_plabels = map_statement('BS', bs_result['line_items'], control_lines)
+            standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'])
+
+            # Validate and calculate residual other_* items
+            standardized, status = validate_and_calculate_bs_residuals(standardized_base, control_lines, sic_code=None)
+            if standardized is None:
+                print(f"   ⚠️  Validation failed: {status} - exporting anyway for debugging")
+                standardized = standardized_base  # Use pre-validation data
+            else:
+                print(f"   ✅ Validation: {status}")
 
         # Always export balance sheet, even if validation failed
         coverage = len(mappings) / len(bs_result['line_items']) * 100 if bs_result['line_items'] else 0
@@ -1875,7 +1919,8 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
             'standardized': standardized,
             'control_items': control_lines,
             'metadata': bs_result.get('metadata', {}),
-            'validation_status': status
+            'validation_status': status,
+            'strategy': 'strategy2' if use_strategy2 else 'strategy1'
         }
 
     # Map Income Statement
