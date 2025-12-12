@@ -151,8 +151,19 @@ def classify_bs_section(line_num, control_lines):
         return 'equity_total'
 
 
-def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''):
-    """Map a balance sheet line item to standardized target"""
+def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype='', is_sum=False, calc_children=None):
+    """Map a balance sheet line item to standardized target.
+
+    Args:
+        plabel: Presentation label
+        line_num: Line number in statement
+        control_lines: Dict of control item line numbers
+        tag: XBRL tag name
+        negating: Whether value is negated
+        datatype: XBRL data type
+        is_sum: True if this item is a parent in the calc graph (sum of children)
+        calc_children: List of (child_tag, weight) tuples from calc graph
+    """
     p = normalize(plabel)
     t = tag.lower()  # Lowercase tag for pattern matching
     dt = datatype.lower() if datatype else ''  # Lowercase datatype for matching
@@ -221,7 +232,7 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
 
     # NON-CURRENT ASSETS
     elif line_num <= total_assets:
-        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p or 'fixed assets' in p) and ('net' in p or 'less' in p)) and ('gross' not in tag and 'gross' not in p and 'cost' not in p and 'cost' not in p):
+        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p or 'fixed assets' in p or 'premise' in p) and ('net' in p or 'less' in p)) and ('gross' not in tag and 'gross' not in p and 'cost' not in p and 'cost' not in p):
             return 'property_plant_equipment_net'
         if ('investment' in p or 'marketable securities' in p) and line_num > total_current_assets:
             return 'long_term_investments'
@@ -302,6 +313,11 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                 return 'account_payables'
             if 'employ' in p or 'compensation' in p or 'wages' in p or 'salaries' in p or 'payroll' in p:
                 return 'accrued_payroll'
+            if 'accrued' in p and 'interest' in p:
+                return 'accrued_interest_payable'
+            # Dividends payable
+            if 'dividend' in p and ('payable' in p or 'liability' in p or 'accrued' in p):
+                return 'dividends_payable'
             if 'accrued' in p and not any(x in p for x in ['employment', 'compensation', 'wages', 'salaries', 'payroll', 'tax', 'taxes']):
                 return 'accrued_expenses'
             # CSV line 30: [unearned OR unexpired] - Check BEFORE short_term_debt to avoid broad "current portion" match
@@ -311,11 +327,8 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             if (('borrowing' in p or 'borrowings' in p or 'debt' in p or  'notes' in p or 'loan' in p or 'loans' in p) and
                 'long-term' not in p and 'long term' not in p) or \
                ((('one year' in p or 'long-term' in p or 'long term' in p) and 'within' in p) and 'lease' not in p) or \
-               (('current maturities' in p or 'current portion' in p or 'current installment' in p) and 'lease' not in p):
+               (('current maturities' in p or 'current portion' in p or 'current installment' in p) and 'lease' not in p) or('commercial paper' in p):
                 return 'short_term_debt'
-            # Dividends payable
-            if 'dividend' in p and ('payable' in p or 'liability' in p):
-                return 'dividends_payable'
             # CSV line 29: [(payables OR payable) AND income taxes]
             if ('payable' in p or 'accrued' in p or 'liabilit' in p or 'obligation' in p) and 'tax' in p and 'deferred' not in p:
                 return 'tax_payables'
@@ -1055,7 +1068,9 @@ def map_statement(stmt_type, line_items, control_lines):
             tag = item.get('tag', '')
             negating = item.get('negating', item.get('NEGATING', 0))
             datatype = item.get('datatype', '')
-            target = map_bs_item(plabel, line_num, control_lines, tag, negating, datatype)
+            is_sum = item.get('is_sum', False)
+            calc_children = item.get('calc_children', [])
+            target = map_bs_item(plabel, line_num, control_lines, tag, negating, datatype, is_sum, calc_children)
             # REMOVED: auto-assignment logic (other_* now calculated as residuals)
 
         elif stmt_type == 'IS':
@@ -1118,7 +1133,11 @@ def map_statement(stmt_type, line_items, control_lines):
 
 
 def aggregate_by_target(target_to_plabels, line_items):
-    """Aggregate values by target across all source items and all periods"""
+    """Aggregate values by target across all source items and all periods.
+
+    Also tracks calc graph info (is_sum, calc_children, source_tags) for each target
+    to support skipping children of mapped sums in residual calculations.
+    """
     standardized = {}
 
     # Get all unique period labels from line items
@@ -1128,31 +1147,57 @@ def aggregate_by_target(target_to_plabels, line_items):
         if isinstance(values, dict):
             all_periods.update(values.keys())
 
+    # Build a lookup for line_items by (plabel, line_num) for efficiency
+    item_lookup = {}
+    for item in line_items:
+        key = (item['plabel'], item.get('stmt_order', 0))
+        item_lookup[key] = item
+
     for target, source_items in target_to_plabels.items():
         # Calculate aggregated values for EACH period
         period_values = {}
         for period_label in all_periods:
             period_total = 0
             for plabel, line_num in source_items:
-                for item in line_items:
-                    if item['plabel'] == plabel and item.get('stmt_order', 0) == line_num:
-                        values = item.get('values', {})
-                        if isinstance(values, dict):
-                            value = values.get(period_label)
-                            if value and not pd.isna(value):
-                                period_total += value
-                        break
+                item = item_lookup.get((plabel, line_num))
+                if item:
+                    values = item.get('values', {})
+                    if isinstance(values, dict):
+                        value = values.get(period_label)
+                        if value and not pd.isna(value):
+                            period_total += value
             if period_total != 0:
                 period_values[period_label] = period_total
 
         # For backwards compatibility, also store first period as total_value
         total_value = list(period_values.values())[0] if period_values else None
 
+        # Collect calc graph info from source items
+        # Track: is this target a sum? What are its children tags?
+        is_sum = False
+        calc_children = []
+        source_tags = []
+        for plabel, line_num in source_items:
+            item = item_lookup.get((plabel, line_num))
+            if item:
+                tag = item.get('tag', '')
+                if tag:
+                    source_tags.append(tag)
+                if item.get('is_sum', False):
+                    is_sum = True
+                    # Collect calc_children: [(child_tag, weight), ...]
+                    children = item.get('calc_children', [])
+                    if children:
+                        calc_children.extend(children)
+
         standardized[target] = {
             'total_value': total_value,
             'period_values': period_values,
             'count': len(source_items),
-            'source_items': [plabel for plabel, _ in source_items]
+            'source_items': [plabel for plabel, _ in source_items],
+            'source_tags': source_tags,  # XBRL tags mapped to this target
+            'is_sum': is_sum,  # True if any source is a calc graph parent
+            'calc_children': calc_children  # [(child_tag, weight), ...] - children to skip in residual
         }
 
     return standardized

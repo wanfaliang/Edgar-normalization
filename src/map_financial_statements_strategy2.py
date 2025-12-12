@@ -38,12 +38,22 @@ def is_current_pattern(p):
     return ('current' in p or 'short term' in p or 'short-term' in p) and not is_non_current_pattern(p)
 
 
-def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, datatype=''):
+def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, datatype='', is_sum=False, calc_children=None):
     """
     Map a balance sheet line item for unclassified balance sheets.
 
     Uses pattern matching instead of line number position to determine current vs non-current.
     Items that can't be distinguished go to combined buckets.
+
+    Args:
+        plabel: Presentation label
+        line_num: Line number in statement
+        control_lines: Dict of control item line numbers
+        tag: XBRL tag name
+        negating: Whether value is negated
+        datatype: XBRL data type
+        is_sum: True if this item is a parent in the calc graph (sum of children)
+        calc_children: List of (child_tag, weight) tuples from calc graph
     """
     p = normalize(plabel)
     t = tag.lower() if tag else ''
@@ -109,7 +119,8 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
             return 'prepaids'
 
         # Property, plant and equipment
-        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p or 'fixed assets' in p) and
+        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p 
+             or 'fixed assets' in p or 'premise' in p) and
             ('net' in p or 'less' in p)) and ('gross' not in t and 'gross' not in p and 'cost' not in p):
             return 'property_plant_equipment_net'
 
@@ -212,7 +223,11 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
         # Accounts payable
         if ('account' in p or 'trade' in p) and 'payable' in p:
             return 'account_payables'
-
+        if 'accrued' in p and 'interest' in p:
+                return 'accrued_interest_payable'
+        # Dividends payable
+        if 'dividend' in p and ('payable' in p or 'liability' in p or 'accrued' in p):
+                return 'dividends_payable'
         # Accrued items
         if 'employ' in p or 'compensation' in p or 'wages' in p or 'salaries' in p or 'payroll' in p:
             return 'accrued_payroll'
@@ -238,9 +253,6 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
                 # Default to long-term for ambiguous debt
                 return 'long_term_debt'
 
-        # Dividends payable
-        if 'dividend' in p and ('payable' in p or 'liability' in p):
-            return 'dividends_payable'
 
         # Tax payables - use pattern for current vs non-current
         if ('payable' in p or 'accrued' in p or 'liabilit' in p or 'obligation' in p) and 'tax' in p and 'deferred' not in p:
@@ -314,6 +326,8 @@ def map_balance_sheet_strategy2(line_items, control_lines):
         tag = item.get('tag', '')
         negating = item.get('negating', 0)
         datatype = item.get('datatype', '')
+        is_sum = item.get('is_sum', False)
+        calc_children = item.get('calc_children', [])
 
         # Get value from most recent period
         value = None
@@ -322,7 +336,7 @@ def map_balance_sheet_strategy2(line_items, control_lines):
                 value = val
                 break
 
-        target = map_bs_item_strategy2(plabel, line_num, control_lines, tag, negating, datatype)
+        target = map_bs_item_strategy2(plabel, line_num, control_lines, tag, negating, datatype, is_sum, calc_children)
 
         if target:
             mappings.append({

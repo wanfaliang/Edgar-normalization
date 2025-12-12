@@ -9,6 +9,7 @@ data/sec_data/
 data/sec_datasets/
 output/
 src/data/
+xbrl_cache/
 
 # But keep the directory structure documentation
 !data/sec_data/.gitkeep

@@ -817,7 +817,26 @@ class StatementReconstructor:
 
         Returns:
             int: Number of nodes marked as sum items
+
+        Note:
+            calc_children format is enriched to: [(child_tag, weight, plabel_or_None), ...]
+            where plabel is looked up from the statement's line items.
         """
+        # Build tag-to-plabel mapping from all nodes in hierarchy
+        # This allows us to enrich calc_children with plabel info
+        tag_to_plabel = {}
+
+        def build_tag_mapping(node: StatementNode):
+            if node.tag:
+                # Store both with and without prefix
+                tag_to_plabel[node.tag] = node.plabel
+                if '_' in node.tag:
+                    tag_to_plabel[node.tag.split('_', 1)[1]] = node.plabel
+            for child in node.children:
+                build_tag_mapping(child)
+
+        build_tag_mapping(hierarchy)
+
         # Build set of sum tags (both with and without prefix for flexible matching)
         sum_tags = set(calc_graph.keys())
 
@@ -831,6 +850,18 @@ class StatementReconstructor:
                 sum_tags_no_prefix.add(tag)
 
         marked_count = 0
+
+        def get_plabel_for_tag(child_tag: str) -> str:
+            """Look up plabel for a child tag, trying various forms."""
+            # Try exact match
+            if child_tag in tag_to_plabel:
+                return tag_to_plabel[child_tag]
+            # Try without prefix
+            if '_' in child_tag:
+                unprefixed = child_tag.split('_', 1)[1]
+                if unprefixed in tag_to_plabel:
+                    return tag_to_plabel[unprefixed]
+            return None
 
         def mark_recursive(node: StatementNode):
             nonlocal marked_count
@@ -850,7 +881,12 @@ class StatementReconstructor:
 
             if matched_tag:
                 node.is_sum = True
-                node.calc_children = list(calc_graph[matched_tag])
+                # Enrich calc_children with plabel: (child_tag, weight, plabel)
+                enriched_children = []
+                for child_tag, weight in calc_graph[matched_tag]:
+                    plabel = get_plabel_for_tag(child_tag)
+                    enriched_children.append((child_tag, weight, plabel))
+                node.calc_children = enriched_children
                 marked_count += 1
 
             for child in node.children:

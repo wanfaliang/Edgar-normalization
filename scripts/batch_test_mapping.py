@@ -442,9 +442,9 @@ def main():
         query = """
             SELECT c.company_name, c.ticker, c.cik, c.sic, f.adsh, f.source_year, f.source_quarter, f.form_type
             FROM companies c JOIN filings f ON c.cik = f.cik
-            WHERE c.cik = %s AND f.source_year = %s AND f.source_quarter = %s
+            WHERE c.cik = %s::text AND f.source_year = %s AND f.source_quarter = %s
         """
-        params = [cik, args.year, args.quarter]
+        params = [str(cik), args.year, args.quarter]
 
         if args.form:
             query += " AND f.form_type = %s"
