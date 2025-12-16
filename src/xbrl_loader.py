@@ -283,6 +283,130 @@ def parse_calc_linkbase(cal_tree: ET.ElementTree) -> Dict[str, List[Tuple[str, f
     return result
 
 
+def load_schema_file(cik: int, adsh: str, cache_dir: Path = None) -> Optional[ET.ElementTree]:
+    """
+    Download (or load from cache) the XBRL schema (.xsd) file for a filing.
+
+    For Inline XBRL filings, the calc linkbase is often embedded in the .xsd file
+    rather than in a separate _cal.xml file.
+
+    Returns:
+        ElementTree object if schema found, None otherwise
+    """
+    base_url = get_filing_base_url(cik, adsh)
+    subdir = get_cache_dir(cik, adsh, cache_dir)
+
+    # Check if we have cached index.json
+    index_cache = subdir / "index.json"
+    if index_cache.exists():
+        with open(index_cache, 'r') as f:
+            index_json = json.load(f)
+    else:
+        index_json = fetch_index_json(cik, adsh)
+        # Cache the index
+        subdir.mkdir(parents=True, exist_ok=True)
+        with open(index_cache, 'w') as f:
+            json.dump(index_json, f)
+
+    names = find_xbrl_filenames(index_json)
+    schema_name = names.get("schema")
+
+    if not schema_name:
+        return None
+
+    # Check cache
+    schema_path = subdir / schema_name
+    if not schema_path.exists():
+        schema_path = download_file(base_url, schema_name, subdir)
+
+    tree = ET.parse(schema_path)
+    return tree
+
+
+def parse_calc_linkbase_from_schema(schema_tree: ET.ElementTree) -> Dict[str, List[Tuple[str, float]]]:
+    """
+    Parse embedded calculation linkbase from an XBRL schema (.xsd) file.
+
+    For Inline XBRL filings, the calc linkbase is often embedded directly in the .xsd
+    file as <link:calculationLink> elements containing <link:calculationArc> elements.
+
+    Args:
+        schema_tree: ElementTree object of the .xsd file
+
+    Returns:
+        dict: {parent_tag: [(child_tag, weight), ...], ...}
+    """
+    root = schema_tree.getroot()
+
+    # Map: xlink:label -> concept tag name
+    loc_map = {}
+
+    # First pass: collect all locators (label -> tag)
+    # In embedded calc linkbase, locators are inside <link:calculationLink> elements
+    for loc in root.iter("{http://www.xbrl.org/2003/linkbase}loc"):
+        label = loc.attrib.get("{http://www.w3.org/1999/xlink}label")
+        href = loc.attrib.get("{http://www.w3.org/1999/xlink}href")
+
+        if label and href and "#" in href:
+            # href like "us-gaap_Assets" or with namespace prefix
+            tag = href.split("#", 1)[1]
+            loc_map[label] = tag
+
+    # Build the graph: parent_tag -> [(child_tag, weight, order), ...]
+    graph = defaultdict(list)
+
+    # Second pass: collect all calculation arcs
+    for arc in root.iter("{http://www.xbrl.org/2003/linkbase}calculationArc"):
+        from_label = arc.attrib.get("{http://www.w3.org/1999/xlink}from")
+        to_label = arc.attrib.get("{http://www.w3.org/1999/xlink}to")
+        weight = float(arc.attrib.get("weight", "1"))
+        order = float(arc.attrib.get("order", "0"))
+
+        parent_tag = loc_map.get(from_label)
+        child_tag = loc_map.get(to_label)
+
+        if parent_tag and child_tag:
+            # Check if this child is already in the parent's list (avoid duplicates)
+            existing = [c for c, w, o in graph[parent_tag] if c == child_tag]
+            if not existing:
+                graph[parent_tag].append((child_tag, weight, order))
+
+    # Sort children by order and remove order from result
+    result = {}
+    for parent, children in graph.items():
+        sorted_children = sorted(children, key=lambda x: x[2])
+        result[parent] = [(child, weight) for child, weight, _ in sorted_children]
+
+    return result
+
+
+def load_calc_graph_from_schema(cik: int, adsh: str, cache_dir: Path = None) -> Dict[str, List[Tuple[str, float]]]:
+    """
+    Load calc graph from embedded linkbase in the .xsd schema file.
+
+    Args:
+        cik: Company CIK number
+        adsh: Filing ADSH
+        cache_dir: Optional cache directory
+
+    Returns:
+        dict: {parent_tag: [(child_tag, weight), ...], ...}
+
+    Raises:
+        FileNotFoundError: If no schema file found or no calc linkbase in schema
+    """
+    schema_tree = load_schema_file(cik, adsh, cache_dir)
+    if schema_tree is None:
+        raise FileNotFoundError(f"No schema file found for CIK {cik}, ADSH {adsh}")
+
+    calc_graph = parse_calc_linkbase_from_schema(schema_tree)
+
+    if not calc_graph:
+        raise FileNotFoundError(f"No embedded calc linkbase found in schema for CIK {cik}, ADSH {adsh}")
+
+    return calc_graph
+
+
 def load_calc_graph(cik: int, adsh: str, cache_dir: Path = None) -> Dict[str, List[Tuple[str, float]]]:
     """
     Main entry point: load and parse the calculation linkbase for a filing.
@@ -439,10 +563,10 @@ def detect_taxonomy_year_from_filing(cik: int, adsh: str) -> int:
 
 def load_calc_graph_with_fallback(cik: int, adsh: str, cache_dir: Path = None) -> Tuple[Dict[str, List[Tuple[str, float]]], str]:
     """
-    Load calculation graph, with fallback to US-GAAP standard taxonomy.
-
-    First tries to load the filing-specific calc linkbase (_cal.xml).
-    If not available (Inline XBRL), falls back to the standard US-GAAP taxonomy.
+    Load calculation graph, with fallback chain:
+    1. Filing-specific calc linkbase (_cal.xml)
+    2. Embedded calc linkbase in schema file (.xsd)
+    3. US-GAAP standard taxonomy
 
     Args:
         cik: Company CIK number
@@ -452,18 +576,26 @@ def load_calc_graph_with_fallback(cik: int, adsh: str, cache_dir: Path = None) -
     Returns:
         tuple: (calc_graph, source)
             - calc_graph: {parent_tag: [(child_tag, weight), ...], ...}
-            - source: "filing" or "us-gaap-{year}"
+            - source: "filing", "schema", or "us-gaap-{year}"
     """
     cache_dir = cache_dir or DEFAULT_CACHE_DIR
 
-    # Try filing-specific calc linkbase first
+    # Try 1: Filing-specific calc linkbase (_cal.xml)
     try:
         calc_graph = load_calc_graph(cik, adsh, cache_dir)
         return calc_graph, "filing"
     except FileNotFoundError:
         pass
 
-    # Fallback to US-GAAP standard taxonomy
+    # Try 2: Embedded calc linkbase in schema file (.xsd)
+    try:
+        calc_graph = load_calc_graph_from_schema(cik, adsh, cache_dir)
+        print(f"  Loaded calc graph from embedded linkbase in schema ({len(calc_graph)} parent tags)")
+        return calc_graph, "schema"
+    except FileNotFoundError:
+        pass
+
+    # Try 3: Fallback to US-GAAP standard taxonomy
     print("  No filing-specific calc linkbase found, using US-GAAP standard taxonomy...")
     taxonomy_year = detect_taxonomy_year_from_filing(cik, adsh)
     calc_graph = load_us_gaap_calc_linkbase(taxonomy_year, cache_dir)
@@ -475,6 +607,113 @@ def get_sum_items(calc_graph: Dict[str, List[Tuple[str, float]]]) -> set:
     Get all tags that are sum/total items (i.e., they are parents in the calc graph).
     """
     return set(calc_graph.keys())
+
+
+# =============================================================================
+# Control Item Tags (structural totals in balance sheet)
+# =============================================================================
+
+# These are the XBRL tags for control items - structural totals we use to organize the balance sheet
+# Items whose parent is one of these tags should be mapped; others should be skipped
+CONTROL_ITEM_TAGS = {
+    # Current Assets
+    'assetscurrent',
+    # Non-current Assets
+    'assetsnoncurrent',
+    'assetsnoncurrentexcludingpropertyplantandequipment',
+    'assetsnoncurrentotherthanpropertyplantandequipmentandfinanceassets',
+    # Total Assets
+    'assets',
+    # Current Liabilities
+    'liabilitiescurrent',
+    # Non-current Liabilities
+    'liabilitiesnoncurrent',
+    'liabilitiesotherthanlongtermdebtnonncurrent',
+    # Total Liabilities
+    'liabilities',
+    # Stockholders Equity
+    'stockholdersequity',
+    'stockholdersequityincludingportionattributabletononcontrollinginterest',
+    'equity',
+    'equityincludingportionattributabletononcontrollinginterest',
+    # Total Liabilities and Equity
+    'liabilitiesandstockholdersequity',
+    # Additional variations for financial companies
+    'assetsnet',
+    'liabilitiesandequity',
+}
+
+
+def build_parent_lookup(calc_graph: Dict[str, List[Tuple[str, float]]]) -> Dict[str, str]:
+    """
+    Build a reverse lookup from child tag to parent tag.
+
+    Args:
+        calc_graph: {parent_tag: [(child_tag, weight), ...], ...}
+
+    Returns:
+        {child_tag: parent_tag, ...}
+
+    Note: If a child has multiple parents (rare), only one is kept.
+    """
+    parent_lookup = {}
+    for parent_tag, children in calc_graph.items():
+        for child_tag, weight in children:
+            # Store parent for this child (last one wins if multiple parents)
+            parent_lookup[child_tag] = parent_tag
+    return parent_lookup
+
+
+def is_control_item_tag(tag: str) -> bool:
+    """
+    Check if a tag is a control item tag.
+
+    Normalizes the tag (lowercase, removes prefix) before checking.
+    """
+    if not tag:
+        return False
+    # Normalize: lowercase and remove namespace prefix
+    tag_normalized = tag.lower()
+    if '_' in tag_normalized:
+        tag_normalized = tag_normalized.split('_', 1)[1]
+    return tag_normalized in CONTROL_ITEM_TAGS
+
+
+def should_map_item(item_tag: str, parent_lookup: Dict[str, str]) -> bool:
+    """
+    Determine if an item should be mapped based on its parent in the calc graph.
+
+    Logic:
+    - If item has no parent in calc graph -> map it (assume direct child of control item)
+    - If item's parent is a control item tag -> map it
+    - If item's parent is NOT a control item tag -> skip it (grandchild or deeper)
+
+    Args:
+        item_tag: The XBRL tag of the item to check
+        parent_lookup: {child_tag: parent_tag, ...} from build_parent_lookup()
+
+    Returns:
+        True if item should be mapped, False if it should be skipped
+    """
+    if not item_tag:
+        return True  # No tag, can't check, default to map
+
+    # Normalize item tag for lookup
+    item_tag_normalized = item_tag
+    if '_' in item_tag:
+        item_tag_no_prefix = item_tag.split('_', 1)[1]
+    else:
+        item_tag_no_prefix = item_tag
+
+    # Try to find parent (check both with and without prefix)
+    parent_tag = parent_lookup.get(item_tag) or parent_lookup.get(item_tag_no_prefix)
+
+    if not parent_tag:
+        # No parent found in calc graph -> assume it's a direct child of control item
+        return True
+
+    # Check if parent is a control item
+    return is_control_item_tag(parent_tag)
 
 
 def get_calc_children(calc_graph: Dict[str, List[Tuple[str, float]]], parent_tag: str) -> List[Tuple[str, float]]:

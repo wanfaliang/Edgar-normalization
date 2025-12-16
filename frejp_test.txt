@@ -1,0 +1,169 @@
+
+================================================================================
+MAPPING FINANCIAL STATEMENTS
+================================================================================
+
+Company: FEDERAL HOME LOAN MORTGAGE CORP (Ticker: FREJP, CIK: 1026214)
+Filing: 0001026214-24-000039
+Dataset: 2024Q2
+
+📋 Reconstructing Balance Sheet...
+
+============================================================
+Reconstructing BS statement (MULTI-PERIOD)
+CIK: 1026214, ADSH: 0001026214-24-000039
+============================================================
+
+Loading filing data for 0001026214-24-000039...
+Loading pre.txt...
+  Loaded 838,475 rows
+Loading num.txt...
+  Loaded 3,426,170 rows
+Loading tag.txt...
+  Loaded 97,771 rows
+Loading sub.txt...
+  Loaded 7,675 rows
+  PRE rows: 97
+  NUM rows: 576
+  Filing: FEDERAL HOME LOAN MORTGAGE CORP 10-Q FY2024 Q1
+
+Building hierarchy for BS statement (report 3, 23 rows)...
+  Detected flat structure (all items at level 0)
+
+Discovered 2 periods:
+  - As of Mar 31, 2024 (ddate=20240331, qtrs=0)
+  - As of Dec 31, 2023 (ddate=20231231, qtrs=0)
+  Attaching values for period: As of Mar 31, 2024
+    ddate=20240331, qtrs=0
+    Attached values for 23 line items
+  Attaching values for period: As of Dec 31, 2023
+    ddate=20231231, qtrs=0
+    Attached values for 23 line items
+  Calc graph loaded (filing): 35 parent tags, 9 nodes marked as sum items
+
+Multi-period reconstruction complete!
+  Total line items: 23
+  Periods: 2
+  EDGAR viewer: https://www.sec.gov/cgi-bin/viewer?action=view&cik=0001026214&accession_number=0001026214-24-000039&xbrl_type=v
+   ✅ 23 items, 2 periods
+   📌 Using Strategy 2 (unclassified balance sheet - missing total_current_assets or total_current_liabilities)
+   📊 Mapped: 17/23 (73.9%)
+   🎯 Unique targets: 17
+
+📋 Reconstructing Income Statement...
+
+============================================================
+Reconstructing IS statement (MULTI-PERIOD)
+CIK: 1026214, ADSH: 0001026214-24-000039
+============================================================
+
+Loading filing data for 0001026214-24-000039...
+  PRE rows: 97
+  NUM rows: 576
+  Filing: FEDERAL HOME LOAN MORTGAGE CORP 10-Q FY2024 Q1
+
+Building hierarchy for IS statement (report 2, 27 rows)...
+  Detected flat structure (all items at level 0)
+
+Discovered 2 periods:
+  - Three Months Ended Mar 31, 2024 (ddate=20240331, qtrs=1)
+  - Three Months Ended Mar 31, 2023 (ddate=20230331, qtrs=1)
+  Attaching values for period: Three Months Ended Mar 31, 2024
+    ddate=20240331, qtrs=1
+    Attached values for 27 line items
+  Attaching values for period: Three Months Ended Mar 31, 2023
+    ddate=20230331, qtrs=1
+    Attached values for 27 line items
+  Calc graph loaded (filing): 35 parent tags, 11 nodes marked as sum items
+
+Multi-period reconstruction complete!
+  Total line items: 27
+  Periods: 2
+  EDGAR viewer: https://www.sec.gov/cgi-bin/viewer?action=view&cik=0001026214&accession_number=0001026214-24-000039&xbrl_type=v
+   ✅ 27 items, 2 periods
+   📊 Mapped: 18/27 (66.7%)
+   🎯 Unique targets: 12
+
+📋 Reconstructing Cash Flow...
+
+============================================================
+Reconstructing CF statement (MULTI-PERIOD)
+CIK: 1026214, ADSH: 0001026214-24-000039
+============================================================
+
+Loading filing data for 0001026214-24-000039...
+  PRE rows: 97
+  NUM rows: 576
+  Filing: FEDERAL HOME LOAN MORTGAGE CORP 10-Q FY2024 Q1
+
+Building hierarchy for CF statement (report 6, 22 rows)...
+  Detected flat structure (all items at level 0)
+
+Discovered 2 periods:
+  - Three Months Ended Mar 31, 2024 (ddate=20240331, qtrs=1)
+  - Three Months Ended Mar 31, 2023 (ddate=20230331, qtrs=1)
+  Attaching values for period: Three Months Ended Mar 31, 2024
+    ddate=20240331, qtrs=1
+    Attached values for 22 line items
+  Attaching values for period: Three Months Ended Mar 31, 2023
+    ddate=20230331, qtrs=1
+    Attached values for 22 line items
+  Calc graph loaded (filing): 35 parent tags, 3 nodes marked as sum items
+
+Multi-period reconstruction complete!
+  Total line items: 22
+  Periods: 2
+  EDGAR viewer: https://www.sec.gov/cgi-bin/viewer?action=view&cik=0001026214&accession_number=0001026214-24-000039&xbrl_type=v
+   ✅ 22 items, 2 periods
+   📊 Mapped: 21/22 (95.5%)
+   🎯 Unique targets: 11
+
+📋 Reconstructing other available statements...
+
+============================================================
+Reconstructing EQ statement (MULTI-PERIOD)
+CIK: 1026214, ADSH: 0001026214-24-000039
+============================================================
+
+Loading filing data for 0001026214-24-000039...
+  PRE rows: 97
+  NUM rows: 576
+  Filing: FEDERAL HOME LOAN MORTGAGE CORP 10-Q FY2024 Q1
+
+Building hierarchy for EQ statement (report 5, 9 rows)...
+  Detected flat structure (all items at level 0)
+Warning: No representative tag found for EQ, using all tags
+
+Discovered 2 periods:
+  - Three Months Ended Mar 31, 2024 (ddate=20240331, qtrs=1)
+  - Three Months Ended Mar 31, 2023 (ddate=20230331, qtrs=1)
+  Attaching values for period: Three Months Ended Mar 31, 2024
+    ddate=20240331, qtrs=1
+    Attached values for 9 line items
+  Attaching values for period: Three Months Ended Mar 31, 2023
+    ddate=20230331, qtrs=1
+    Attached values for 9 line items
+  Calc graph loaded (filing): 35 parent tags, 4 nodes marked as sum items
+
+Multi-period reconstruction complete!
+  Total line items: 9
+  Periods: 2
+  EDGAR viewer: https://www.sec.gov/cgi-bin/viewer?action=view&cik=0001026214&accession_number=0001026214-24-000039&xbrl_type=v
+   ✅ Equity Statement: 9 items, 2 periods
+
+============================================================
+Reconstructing CI statement (MULTI-PERIOD)
+CIK: 1026214, ADSH: 0001026214-24-000039
+============================================================
+
+Loading filing data for 0001026214-24-000039...
+  PRE rows: 97
+  NUM rows: 576
+  Filing: FEDERAL HOME LOAN MORTGAGE CORP 10-Q FY2024 Q1
+  Warning: No CI statement found in PRE table
+
+📊 Creating Excel workbook...
+   ✅ Excel saved to: output\financial_statements\FREJP_1026214_financial_statements.xlsx
+Balance sheet keys: ['line_items', 'periods', 'mappings', 'standardized', 'control_items', 'metadata', 'validation_status', 'strategy']
+
+Balance sheet standardized keys: ['cash_cash_equivalent_and_restricted_cash', 'loans_and_financing_receivables_net', 'long_term_investments', 'investment_securities', 'deferred_tax_assets', 'total_assets', 'accrued_interest_payable', 'long_term_debt', 'total_liabilities', 'common_stock', 'retained_earnings', 'accumulated_other_comprehensive_income_loss', 'treasury_stock', 'total_equity', 'total_liabilities_and_total_equity', 'other_assets', 'other_liabilities']

@@ -521,7 +521,7 @@ def main():
 
                 # Save to statements folder
                 wb = create_excel_workbook(fs_results, company['company_name'], ticker)
-                statement_file = statements_folder / f"{ticker}_{cik}_financial_statements.xlsx"
+                statement_file = statements_folder / f"{ticker}_{cik}_financial_statements_{timestamp}.xlsx"
                 wb.save(statement_file)
                 print(f"Saved")
 

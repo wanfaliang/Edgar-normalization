@@ -207,7 +207,8 @@ class StatementReconstructor:
         stmt_df['line'] = stmt_df['line'].astype(int)
 
         # Handle negating field (may be NaN)
-        stmt_df['negating'] = stmt_df['negating'].fillna('false')
+        # PRE table stores negating as '1' (true) or '0' (false), or NaN
+        stmt_df['negating'] = stmt_df['negating'].fillna('0')
 
         # Check if this is a flat structure (all items at level 0)
         is_flat = (stmt_df['inpth'] == 0).all()
@@ -232,7 +233,7 @@ class StatementReconstructor:
                     report=main_report,
                     level=row['inpth'],
                     line=row['line'],
-                    negating=(row['negating'].lower() == 'true'),
+                    negating=(row['negating'] == '1'),
                     parent=root
                 )
                 root.children.append(node)
@@ -252,7 +253,7 @@ class StatementReconstructor:
                 report=main_report,
                 level=row['inpth'],
                 line=row['line'],
-                negating=(row['negating'].lower() == 'true')
+                negating=(row['negating'] == '1')
             )
 
             if node.level == 0:
@@ -997,7 +998,10 @@ class StatementReconstructor:
 
                     # Calc graph fields (from XBRL calculation linkbase)
                     'is_sum': node.is_sum,
-                    'calc_children': node.calc_children if node.is_sum else []
+                    'calc_children': node.calc_children if node.is_sum else [],
+
+                    # Parent info (for skip logic - to check if parent is a control item)
+                    'parent_line': node.parent.line if node.parent and not node.parent.tag.endswith('_ROOT') else None,
                 })
 
             for child in node.children:
@@ -1134,6 +1138,36 @@ class StatementReconstructor:
             print(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
         except Exception as e:
             print(f"  Warning: Could not load calc graph: {e}")
+
+        # Step 5c: Build reverse lookup from calc_children: child_tag -> parent_line
+        # This tells us for each tag, what is its calc graph parent's line number
+        calc_parent_lookup = {}  # child_tag (lowercase) -> parent_line
+
+        def build_calc_parent_lookup(node: StatementNode):
+            """Build reverse lookup from calc_children to find calc graph parent"""
+            if node.is_sum and node.calc_children:
+                parent_line = node.line
+                for child_entry in node.calc_children:
+                    # child_entry is (child_tag, weight, plabel) or (child_tag, weight)
+                    if isinstance(child_entry, (list, tuple)) and len(child_entry) >= 1:
+                        child_tag = child_entry[0]
+                        # Normalize tag: remove prefix like 'us-gaap_'
+                        if '_' in child_tag:
+                            child_tag = child_tag.split('_', 1)[1]
+                        child_tag_lower = child_tag.lower()
+                        # If this child already has a parent assigned, prefer the one with greater line number
+                        # Greater line numbers are typically higher-level control items (e.g., Total Assets)
+                        # This handles cases where an item appears under multiple parents in calc graph
+                        if child_tag_lower in calc_parent_lookup:
+                            existing_parent_line = calc_parent_lookup[child_tag_lower]
+                            if parent_line > existing_parent_line:
+                                calc_parent_lookup[child_tag_lower] = parent_line
+                        else:
+                            calc_parent_lookup[child_tag_lower] = parent_line
+            for child in node.children:
+                build_calc_parent_lookup(child)
+
+        build_calc_parent_lookup(hierarchy)
 
         # Step 6: Create line_items with multi-period values
         line_items = []
@@ -1299,7 +1333,11 @@ class StatementReconstructor:
 
                     # Calc graph fields (from XBRL calculation linkbase)
                     'is_sum': node.is_sum,
-                    'calc_children': node.calc_children if node.is_sum else []
+                    'calc_children': node.calc_children if node.is_sum else [],
+
+                    # Parent info from CALC GRAPH (for skip logic - to check if parent is a mapped item)
+                    # This is the calc graph parent, NOT the presentation hierarchy parent
+                    'parent_line': calc_parent_lookup.get(node.tag.lower()),
                 })
 
             for child in node.children:

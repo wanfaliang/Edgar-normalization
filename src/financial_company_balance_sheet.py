@@ -26,97 +26,99 @@ def map_financial_bs_items(plabel, line_num, control_lines, tag='', negating=0, 
 
 
     if line_num < total_assets:
-        if  ('due from bank' in p) or ('due' in p and 'bank' in p):
-            return 'due_from_bank'
+        if  ('due from bank' in p) :
+            return 'cash_and_cash_equivalents'
         if ('deposits with bank' in p) or ('interest' in p and 'deposit' in p) or ('time deposit' in p):
-            return 'deposits_with_bank'
+            return 'cash_and_cash_equivalents'
+        
+        if (('trading' in p  or 'equity securit' in p or 'investment' in p)  and \
+            ('fair value' in p or 'asset' in p)) and 'income investment' not in p:
+            return 'trading_and_derivative_assets_at_fair_value'
+        if 'derivative' in p and ('asset' in p or 'assets' in p):
+            return 'trading_and_derivative_assets_at_fair_value'
+                
+        if ('available for sale' in p or 'carried at fair value' in p) :
+            return 'investment_securities'
+        if 'held to maturity' in p or 'held as investment' in p or 'held for investment' in p or ('investment' in p and 'at amortized cost' in p):
+            return 'investment_securities'
+        
         if 'resell' in p or 'resale' in p:
-            return 'resale_agreement'
-        if ('trading' in p  or 'equity securit' in p or 'investment' in p)  and \
-            ('fair value' in p or 'asset' in p) :
-            return 'trading_assets_at_fair_value'
-        if ('available for sale' in p or 'afS' in p or 'carried at fair value' in p) :
-            return 'available_for_sale_securities'
-        if 'held to maturity' in p or 'helf for investment' in p or 'held for investment' in p:
-            return 'held_to_maturity_securities'
-        if (('loan' in p or 'mortgage' in p or 'lease' in p) and ('held for sale' in p or 'held for investment' in p)) or \
-            ('net' in p or 'after' in p or 'allowance' in p):
-            return 'loans_held_for_sale'
-        if ('loan' in p and 'net of allowance' in p ) or ('mortgage' in p and 'net of allowance' in p) or \
-        'net loan' in p or 'net mortgage' in p or ('mortgage' in p and 'net' in p) or ('loan' in p and 'net' in p):
-            return 'loans_net_of_allowance'
-        if 'accrued' in p or 'receivable' in p or 'recoverable' in p:
-            return 'accrued_receivables'
+            return 'loans_and_financing_receivables_net'
+        if (('loan' in p or 'mortgage' in p or 'lease' in p) and ('held for sale' in p or 'held for investment' in p)) :
+            return 'loans_and_financing_receivables_net'
+        if (('loan' in p and 'net of allowance' in p ) or ('mortgage' in p and 'net of allowance' in p) or \
+        'net loan' in p or 'net mortgage' in p or ('mortgage' in p and 'net' in p) or ('loan' in p and 'net' in p)) or \
+            ('receivable' in p and 'financ' in p) :
+            return 'loans_and_financing_receivables_net'
+        if ('accrued' in p or 'receivable' in p or 'recoverable' in p) and ('interest' in p or 'dividend' in p 
+                                                                            or 'mortgage' in p or 'premium' in p or 'financ' in p):
+            return 'loans_and_financing_receivables_net'
+        
         if 'life insurance' in p:
-            return 'owned_life_insurance'
+            return 'insurance_assets'
         if 'federal bank' in p or 'federal home loan bank' in p or 'fhlb' in p or \
             'frb' in p or 'regulatory stock' in p   :
-            return 'fedral_bank_stock'
-        if 'real estate asset' in p : 
-            return 'real_estate_assets_net'
-        if 'foreclos' in p or 'repossesed' in p:
-            return 'foreclosed_assets'
-        if 'accquisiion' in p and ('intangible' in p or 'cost' in p):
-            return 'acquisition_intangible_assets'
-        if 'derivative' in p and ('asset' in p or 'assets' in p):
-            return 'derivative_assets'
-        if 'investment' in p and 'long term' in p:
             return 'long_term_investments'
-        
-
+        if 'real estate asset' in p : 
+            return 'other_financial_assets'
+        if 'foreclos' in p or 'repossessed' in p:
+            return 'other_financial_assets'
+        if 'acquisition' in p and ('intangible' in p or 'cost' in p):
+            return 'intangible_assets'
 
         if is_sum and calc_children:
             for child_tag, weight, child_plabel in calc_children:
                 cp = normalize(child_plabel) # we need to do this, right?
 
-                if ('available for sale' in cp or 'afS' in cp or 'carried at fair value' in cp) or \
-                    ('held to maturity' in cp or 'helf for investment' in cp or 'held for investment' in cp):
-                    return 'investment_securities_total' 
+                if ('available for sale' in cp or 'afs' in cp or 'carried at fair value' in cp) or \
+                    ('held to maturity' in cp or 'held as investment' in cp or 'held for investment' in cp):
+                    return 'investment_securities' 
 
     # the following are for liabilities parts
     elif line_num > total_assets:
         # the following go after equity parts, are for liabilities parts
-        if ('deposit' in p or 'interest bearing' in p or 'savings' in p or 'checking' in p or 'time' in p 
-            or 'money market' in p or 'time account' in p or 'certifictae of deposit' in p):
-            return 'customer_deposits'
+        if ('deposit' in p or 'interest bearing' in p or 'savings' in p or 'checking' in p or 'time deposit' in p
+            or 'time account' in p 
+            or 'money market' in p or 'certificate of deposit' in p):
+            return 'customer_and_policyholder_deposits'
+        if 'acceptance' in p:
+            return 'customer_and_policyholder_deposits'
+        if 'policyholder' in p and 'deposit' in p:
+            return 'customer_and_policyholder_deposits'
+        if 'security deposit' in p:
+            return 'customer_and_policyholder_deposits'
+        
         if 'agreement' in p and ('repurchase' in p or 'repo' in p):
-            return 'repurchase_agreements'
+            return 'short_term_debt'
+        
+        if 'trading' in p  and ('liabilit' in p or 'at fair value' in p) :
+            return 'trading_and_derivative_liabilities_at_fair_value'  
+        if 'derivative' in p and 'liabilit' in p:
+            return 'trading_and_derivative_liabilities_at_fair_value'
+        
+        if ('reserve' in p or 'settlement' in p) and ('loss' in p or 'claim' in p or 'legal' in p):
+            return 'loss_and_claims_reserves_and_payables'
+        if 'insurance' in p and 'assessment' in p:
+            return 'loss_and_claims_reserves_and_payables'
+        
         if 'securit' in p and 'loan' in p :
-            return 'securitized_loans'
+            return 'long_term_debt'
         if 'secured' in p and ('borrowing' in p or 'debt' in p or 'loan' in p or 'financing' in p): 
-            return 'secured_borrowings'
+            return 'long_term_debt'
         if 'unsecured' in p and ('borrowing' in p or 'debt' in p or 'loan' in p 
                                  or 'financing' in p or 'debenture' in p or 'revolving credit facility' in p):
-            return 'unsecured_borrowings'
-        if 'trading' in p  and ('liabilit' in p or 'at fair value' in p) :
-            return 'trading_liabilities_at_fair_value'  
-        if 'derivative' in p and 'liabilit' in p:
-            return 'derivative_liabilities'
-        if ('reserve' in p or 'settlement' in p) and ('loss' in p or 'claim' in p or 'legal' in p):
-            return 'reserves_for_losses'
-        if 'federal home loan bank' in p or 'fhlb' in p or 'frb' in p or 'bank term funding program' in p or 'bTfb' in p:
-            return 'federal_home_loan_bank_and_others_borrowings'
+            return 'long_term_debt'
+        if 'federal home loan bank' in p or 'fhlb' in p or 'frb' in p or 'bank term funding program' in p or 'btfp' in p:
+            return 'long_term_debt'
         if 'subordinated' in p and ('debt' in p or 'note' in p or 'loan' in p or 
                                     'borrowings' in p or 'financing' in p or 'debenture' in p):
-            return 'subordinated_debt'
-        if 'insurance' in p and 'assessment' in p:
-            return 'insurance_assessments_payable'
-        if 'federal income tax' in p or 'income tax payable' in p:
-            return 'income_tax_payable'
-        if 'unearned' in p and ('revenue' in p or 'income' in p or 'fee' in p or 'premium' in p):
-            return 'unearned_revenue'
-        if 'policyholder' in p and ('deposit'):
-            return 'policyholder_deposits'
-        if 'security deposit' in p:
-            return 'security_deposits'
+            return 'long_term_debt'
         if 'senior note' in p or 'senior debt' in p:
-            return 'senior_notes_and_debt'
+            return 'long_term_debt'
         if 'bond' in p:
-            return 'bonds'
-        if 'acceptance' in p:
-            return 'acceptances_outstanding'
+            return 'long_term_debt'
         if 'non recourse' in p and ('mortgage' in p):
-            return 'non_recourse_mortgage'
+            return 'long_term_debt'
         if 'intangible' in p and 'liabilit' in p:
-            return 'intangible_liabilities'
+            return 'other_financial_liabilities'
         

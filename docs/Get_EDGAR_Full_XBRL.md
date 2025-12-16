@@ -294,3 +294,63 @@ To get “full EDGAR XBRL including calc linkbase”:
 If you want, next step I can:
 
 * Wire up a `mark_sum_items_from_calc_graph` function that walks your existing hierarchy and sets `node.is_sum_item` based on the calc linkbase, so you no longer rely on heuristics.
+
+
+  Problem
+
+  For Inline XBRL filings, the calculation linkbase is embedded in the .xsd schema file, not in a separate _cal.xml file. The current    
+   xbrl_loader.py only looks for _cal.xml files and falls back to the US-GAAP standard taxonomy when not found. This causes incorrect    
+   parent_line assignments because the standard taxonomy has different/generic tags that don't match the company's actual tags.
+
+  Example (AMERISAFE - CIK 1018979)
+
+  - Line 3 tag: DebtSecuritiesHeldToMaturityExcludingAccruedInterestAfterAllowanceForCreditLossCurrent
+  - Line 5 tag: EquitySecuritiesFvNi
+  - These tags ARE in the filing's .xsd calc linkbase as children of Investments
+  - But the US-GAAP standard taxonomy has different child tags for Investments
+  - Result: parent_line is None for these items, so they don't get skipped
+
+  Solution
+
+  Update xbrl_loader.py to:
+  1. First try to load separate _cal.xml file (current behavior)
+  2. If not found, try to parse embedded calc linkbase from the .xsd schema file
+  3. Only fall back to US-GAAP standard taxonomy if neither is available
+
+  Changes to xbrl_loader.py
+
+  1. Add new function parse_calc_linkbase_from_schema() to parse <link:calculationArc> elements from .xsd file
+  2. Update load_calc_graph_with_fallback() to try loading from .xsd before falling back to US-GAAP taxonomy
+
+  Now let me implement the fix:
+
+  Summary
+
+  Problem: For Inline XBRL filings, the calculation linkbase was embedded in the .xsd schema file, not in a separate _cal.xml file.      
+  The code was falling back to the US-GAAP standard taxonomy which has different/generic tags that didn't match the company's actual     
+  tags. This caused parent_line to be None for some items, so they weren't skipped by the mapping logic.
+
+  Solution: Updated xbrl_loader.py to:
+  1. First try to load separate _cal.xml file (existing behavior)
+  2. If not found, NEW: parse embedded calc linkbase from the .xsd schema file
+  3. Only fall back to US-GAAP standard taxonomy if neither is available
+
+  Changes made to xbrl_loader.py:
+  1. Added load_schema_file() - Downloads/caches the .xsd schema file
+  2. Added parse_calc_linkbase_from_schema() - Parses <link:calculationArc> elements from .xsd
+  3. Added load_calc_graph_from_schema() - Combines the above two functions
+  4. Updated load_calc_graph_with_fallback() - Added step 2 (try schema) before falling back to US-GAAP
+
+  Result: For AMERISAFE, all 4 children of "Total investments" now correctly have parent_line: 7, so they will be skipped by the
+  mapping logic as intended.
+
+> so, we first check  _cal.xml, for inline we then check .xsd, and finally if none works, we go get fasb taxonomy, right? 
+
+● Yes, exactly! The fallback chain is:
+
+  1. _cal.xml - Separate calculation linkbase file (traditional XBRL filings)
+  2. .xsd - Embedded calc linkbase in schema file (Inline XBRL filings)
+  3. FASB US-GAAP taxonomy - Standard taxonomy from fasb.org (last resort fallback)
+
+  This way we always prefer the filing-specific calculation relationships (which have the exact tags the company uses) over the
+  generic US-GAAP standard taxonomy.

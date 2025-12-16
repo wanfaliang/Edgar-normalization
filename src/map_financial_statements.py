@@ -202,7 +202,7 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
         if 'cash' in p and 'restricted' in p:
             return 'cash_cash_equivalent_and_restricted_cash'
         # CSV line 4: cash and short-term investments (combined - check FIRST before separates)
-        if 'cash and short term' in p:
+        if 'cash and short term' in p or 'cash cash equivalents and short term investments' in p or 'cash cash equivalents and marketable securities' in p:
             return 'cash_and_short_term_investments'
         # CSV line 2: [contains 'cash'] not [contains 'restricted'] not [contains 'cash and short-term investments']
         if ('cash' in p and 'restricted cash' != p) and ('total cash cash equivalents and marketable securities' != p) and ('total cash cash equivalents and short term investments' != p) :
@@ -215,7 +215,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
         # CSV line 5: min{[trade AND receivable] OR [accounts AND receivable] OR [notes AND receivable]}
         if ('trade' in p and ('receivable' in p or 'receivables' in p)) or \
            (('account' in p or 'accounts' in p) and ('receivable' in p or 'receivables' in p)) or \
-           (('note' in p or 'notes' in p) and ('receivable' in p or 'receivables' in p)) or ('receivables net' in p and ('other' not in p and 'tax' not in p)):
+           (('note' in p or 'notes' in p) and ('receivable' in p or 'receivables' in p)) or (('receivable' in p and 'net' in p) 
+                                                                                             and ('other' not in p and 'tax' not in p and 'financ' not in p and 'loan' not in p  
+                                                                                                  and 'interest' not in p and 'accrued' not in p )):
             return 'account_receivables_net'
         # CSV line 6: other receivables
         if 'other receivable' in p or 'other account receivable' in p or 'other accounts receivable' in p:
@@ -228,6 +230,22 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             return 'prepaids'
         if 'total' in p and 'current' in p and 'asset' in p:
             return 'total_current_assets'
+
+        # =====================================================================
+        # FINANCIAL COMPANY CURRENT ASSET PATTERNS
+        # =====================================================================
+        # Cash equivalents for financial companies
+        if ('due from bank' in p) or ('due' in p and 'bank' in p):
+            return 'cash_and_cash_equivalents'
+        if ('deposits with bank' in p) or ('interest' in p and 'deposit' in p) or ('time deposit' in p):
+            return 'cash_and_cash_equivalents'
+
+        # Trading and derivative assets (typically current)
+        if ('trading' in p or 'equity securit' in p) and ('fair value' in p) and ('income investment' not in p and 'loan' not in p):
+            return 'trading_and_derivative_assets_at_fair_value'
+        if 'derivative' in p and ('asset' in p or 'assets' in p):
+            return 'trading_and_derivative_assets_at_fair_value'
+
         # REMOVED: other_current_assets pattern (now calculated as residual)
 
     # NON-CURRENT ASSETS
@@ -243,17 +261,71 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
         if 'goodwill' in p:
             return 'goodwill'
         # CSV line 15: [intangible OR intangibles] NOT [goodwill]
-        if 'intangible' in p or 'intangibles' in p:
+        if ('intangible' in p or 'acquired client' in p or 'customer list' in p
+             or 'trademark' in p or 'patent' in p or 'copyright' in p or 'brand' in p):
             return 'intangible_assets'
-        if (('finance' in p or 'capital' in p) and ('lease' in p or 'leases' in p or 'right of use' in p or 'rou' in p)):
+        if (('finance' in p or 'capital' in p) and ('lease' in p or 'leases' in p or 'right of use' in p )):
             return 'finance_lease_right_of_use_assets'
-        if (('operating' in p or 'operation' in p) and ('lease' in p or 'leases' in p or 'right of use' in p or 'rou' in p)):
+        if (('operating' in p or 'operation' in p) and ('lease' in p or 'leases' in p or 'right of use' in p)):
             return 'operating_lease_right_of_use_assets'
         # Combined lease assets (catch-all after specific operating/finance patterns)
-        if 'lease' in p or 'right of use' in p or 'rou' in p:
+        if ('lease' in p or 'right of use' in p ) and ('loan' not in p):
             return 'lease_assets'
         if 'deferred' in p and 'tax' in p and line_num < total_assets:
             return 'deferred_tax_assets'
+
+        # =====================================================================
+        # FINANCIAL COMPANY NON-CURRENT ASSET PATTERNS
+        # =====================================================================
+        # Investment securities
+        if (('available for sale' in p or 'carried at fair value' in p) or ('investment' in p and 'at fair value' in p)) and ('trading' 
+                                    not in p and 'income investment' not in p and 'loan' not in p):
+            return 'investment_securities'
+        if ('held to maturity' in p or 'held as investment' in p or 'held for investment' in p or ('investment' in p and 'at amortized cost' in p)) and ('trading' not in p and 'income investment' not in p and 'loan' not in p):
+            return 'investment_securities'
+
+        # Loans and financing receivables (typically non-current)
+        if 'resell' in p or 'resale' in p:
+            return 'loans_and_financing_receivables_net'
+        if (('loan' in p or 'mortgage' in p) and ('held for sale' in p or 'held for investment' in p)):
+            return 'loans_and_financing_receivables_net'
+        if (('loan' in p and 'net of allowance' in p) or ('mortgage' in p and 'net of allowance' in p) or \
+            'net loan' in p or 'net mortgage' in p or ('mortgage' in p and 'net' in p) or ('loan' in p and 'net' in p)) or \
+            ('receivable' in p and 'financ' in p):
+            return 'loans_and_financing_receivables_net'
+        if ('accrued' in p or 'receivable' in p or 'recoverable' in p) and ('interest' in p or 'dividend' in p
+                                                                            or 'mortgage' in p or 'premium' in p or 'financ' in p):
+            return 'loans_and_financing_receivables_net'
+
+        # Insurance assets
+        if 'life insurance' in p or 'surrender value' in p or 'reinsurance' in p or 'policy loans' in p:
+            return 'insurance_assets'
+
+        # FHLB/FRB stock (long-term investments)
+        if 'federal bank' in p or 'federal home loan bank' in p or 'fhlb' in p or \
+            'frb' in p or 'regulatory stock' in p:
+            return 'long_term_investments'
+
+        # Other financial assets
+        if 'real estate asset' in p:
+            return 'other_financial_assets'
+        if 'foreclos' in p or 'repossessed' in p:
+            return 'other_financial_assets'
+
+        # Acquisition-related intangibles
+        if 'acquisition' in p and ('intangible' in p or 'cost' in p):
+            return 'intangible_assets'
+
+        # Check calc_children for investment securities (parent item detection)
+        if is_sum and calc_children:
+            for child_entry in calc_children:
+                if isinstance(child_entry, (list, tuple)) and len(child_entry) >= 3:
+                    child_plabel = child_entry[2]
+                    cp = normalize(child_plabel)
+                    if ('available for sale' in cp or 'afs' in cp or 'carried at fair value' in cp) or \
+                        ('held to maturity' in cp or 'held as investment' in cp or 'held for investment' in cp):
+                        return 'investment_securities'
+
         # REMOVED: total_assets pattern - control items mapped by line number only (line 168-169)
         # REMOVED: other_non_current_assets pattern (now calculated as residual)
 
@@ -268,13 +340,14 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
         # Try EQUITY patterns first (most specific)
         # CSV line 44: [(common stock OR common stocks OR common shares OR common share) AND (cost OR par)]
         # Also match by tag for edge cases - MUST be monetary datatype
-        if 'monetary' in dt and (((('common stock' in p or 'common stocks' in p or 'common share' in p or 'common shares' in p) and
+        if 'monetary' in dt and (((('common stock' in p  or 'common share' in p or 'capital stock' in p) and
              ('cost' in p or 'par' in p or 'issued' in p) and
              ('treasury' not in p and 'purchase' not in p)) or
-            (('commonstock' in t or 'commonshare' in t) and ('additional' not in p and 'paid in' not in p and 'excess' not in p and 'surplus' not in p and 'treasury' not in p and 'purchase' not in p))) or ('common stock' == p) or ('common stocks' == p)or ('common shares' == p) or ('common share' == p)):
+            (('commonstock' in t or 'commonshare' in t) and ('additional' not in p and 'paid in' not in p and 'excess' not in p and 'surplus' not in p and 'treasury' not in p and 'purchase' not in p))) or 
+            ('common stock' == p) or ('common stocks' == p)or ('common shares' == p) or ('common share' == p) or 'capital stock' == p):
             return 'common_stock'
-        # CSV line 43: [(preferred stock OR preferred stocks) AND (cost OR par)]
-        if (('preferred stock' in p or 'preferred stocks' in p) and ('cost' in p or 'par' in p)) or ('preferred stock' == p) or ('preferred stocks' == p):
+        # Preferred stock - match any label containing "preferred stock"
+        if 'preferred stock' in p or 'preferred stocks' in p:
             return 'preferred_stock'
         # CSV line 46: [(additional OR excess) AND (capital OR proceeds OR fund)]
         if ('additional' in p or 'paid in' in p or 'excess' in p or 'surplus' in p) and \
@@ -321,7 +394,8 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             if 'accrued' in p and not any(x in p for x in ['employment', 'compensation', 'wages', 'salaries', 'payroll', 'tax', 'taxes']):
                 return 'accrued_expenses'
             # CSV line 30: [unearned OR unexpired] - Check BEFORE short_term_debt to avoid broad "current portion" match
-            if ('unearned' in p or 'unexpired' in p) or ('deferred' in p and ('income' in p or 'revenue' in p)) or ('advance' in p):
+            # Exclude FHLB, BTFP (Federal Reserve lending programs - these are borrowings, not deferred revenue)
+            if ('unearned' in p or 'unexpired' in p) or ('deferred' in p and ('income' in p or 'revenue' in p or 'premium' in p or 'fees' in p)) or ('advance' in p and 'fhlb' not in p and 'federal home loan' not in p and 'btfp' not in p and 'bank term funding' not in p):
                 return 'deferred_revenue'
             # CSV line 26: [(borrowings OR debt OR notes OR loan OR loans) NOT (long-term)] OR [(one year OR long-term) AND within] OR [current maturities OR current portion]
             if (('borrowing' in p or 'borrowings' in p or 'debt' in p or  'notes' in p or 'loan' in p or 'loans' in p) and
@@ -342,6 +416,38 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             # Combined lease obligations current (catch-all after specific operating/finance patterns)
             if 'lease' in p or 'right of use' in p or 'rou' in p:
                 return 'lease_obligation_current'
+
+            # =====================================================================
+            # FINANCIAL COMPANY CURRENT LIABILITY PATTERNS
+            # =====================================================================
+            # Customer and policyholder deposits (typically current)
+            if ('deposit' in p or 'interest bearing' in p or 'savings' in p or 'checking' in p or 'time deposit' in p
+                or 'time account' in p
+                or 'money market' in p or 'certificate of deposit' in p):
+                return 'customer_and_policyholder_deposits'
+            if 'acceptance' in p:
+                return 'customer_and_policyholder_deposits'
+            if 'policyholder' in p and 'deposit' in p:
+                return 'customer_and_policyholder_deposits'
+            if 'security deposit' in p:
+                return 'customer_and_policyholder_deposits'
+
+            # Repurchase agreements (short-term debt)
+            if 'agreement' in p and ('repurchase' in p or 'repo' in p):
+                return 'short_term_debt'
+
+            # Trading and derivative liabilities (typically current)
+            if 'trading' in p and ('liabilit' in p or 'at fair value' in p):
+                return 'trading_and_derivative_liabilities_at_fair_value'
+            if 'derivative' in p and 'liabilit' in p:
+                return 'trading_and_derivative_liabilities_at_fair_value'
+
+            # Loss and claims reserves (could be current)
+            if ('reserve' in p or 'settlement' in p) and ('loss' in p or 'claim' in p or 'legal' in p):
+                return 'loss_and_claims_reserves_and_payables'
+            if 'insurance' in p and 'assessment' in p:
+                return 'loss_and_claims_reserves_and_payables'
+
             # REMOVED: other_payables pattern (captured in residual)
             if 'total' in p and 'current' in p and 'liabilit' in p:
                 return 'total_current_liabilities'
@@ -354,7 +460,7 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             # Also capture "term debt" after total_current_liabilities
             if 'term debt' in p or 'long term obligation' in p:
                 return 'long_term_debt'
-            if ('pension' in p or 'retirement' in p or 'employ' in p) and ('liabilit' in p or 'obligation' in p or 'benefit' in p):
+            if ('pension' in p or 'retir' in p or 'employ' in p) and ('liabilit' in p or 'obligation' in p or 'benefit' in p or 'accrued' in p):
                 return 'pension_and_postretirement_benefits'
             if ('deferred revenue' in p or 'unearned' in p) and line_num > total_current_liabilities:
                 return 'deferred_revenue_non_current'
@@ -370,6 +476,34 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             # Combined lease obligations non-current (catch-all after specific operating/finance patterns)
             if 'lease' in p or 'right of use' in p or 'rou' in p:
                 return 'lease_obligation_non_current'
+
+            # =====================================================================
+            # FINANCIAL COMPANY NON-CURRENT LIABILITY PATTERNS
+            # =====================================================================
+            # Financial company debt patterns (long-term by nature)
+            if 'securit' in p and 'loan' in p:
+                return 'long_term_debt'
+            if 'secured' in p and ('borrowing' in p or 'debt' in p or 'loan' in p or 'financing' in p):
+                return 'long_term_debt'
+            if 'unsecured' in p and ('borrowing' in p or 'debt' in p or 'loan' in p
+                                     or 'financing' in p or 'debenture' in p or 'revolving credit facility' in p):
+                return 'long_term_debt'
+            if 'federal home loan bank' in p or 'fhlb' in p or 'frb' in p or 'bank term funding program' in p or 'btfp' in p:
+                return 'long_term_debt'
+            if 'subordinated' in p and ('debt' in p or 'note' in p or 'loan' in p or
+                                        'borrowings' in p or 'financing' in p or 'debenture' in p):
+                return 'long_term_debt'
+            if 'senior note' in p or 'senior debt' in p:
+                return 'long_term_debt'
+            if 'bond' in p:
+                return 'long_term_debt'
+            if 'non recourse' in p and 'mortgage' in p:
+                return 'long_term_debt'
+
+            # Other financial liabilities
+            if 'intangible' in p and 'liabilit' in p:
+                return 'other_financial_liabilities'
+
             if 'commitments' in p or 'contingencies' in p:
                 return 'commitments_and_contingencies'
             if p in ['total liabilities', 'liabilities total'] or ('total' in p and 'liabilit' in p and 'current' not in p and 'stockholder' not in p and 'equity' not in p):
@@ -1047,13 +1181,33 @@ def map_cf_item(plabel, line_num, control_lines, tag='', line_items=None):
 # ============================================================================
 
 def map_statement(stmt_type, line_items, control_lines):
-    """Map a statement's line items to standardized targets"""
+    """Map a statement's line items to standardized targets
+
+    Args:
+        stmt_type: Statement type ('BS', 'IS', 'CF')
+        line_items: List of line items from reconstructor
+        control_lines: Dict of control line numbers for this statement type
+    """
     mappings = []
     target_to_plabels = defaultdict(list)
+
+    # Build set of control line numbers for quick lookup
+    control_line_nums = set(control_lines.values())
 
     for item in line_items:
         plabel = item['plabel']
         line_num = item.get('stmt_order', 0)
+        tag = item.get('tag', '')
+
+        # For BS items, check if we should skip based on parent_line
+        # Skip if parent is NOT a control item (i.e., this item is a grandchild or deeper)
+        if stmt_type == 'BS':
+            parent_line = item.get('parent_line')
+            is_control_line = line_num in control_line_nums
+            # Skip if: not a control item itself AND has a parent AND parent is not a control item
+            if not is_control_line and parent_line is not None and parent_line not in control_line_nums:
+                # Skip this item - its parent is not a control item
+                continue
 
         # Get value for first period
         values = item.get('values', {})
@@ -1065,7 +1219,6 @@ def map_statement(stmt_type, line_items, control_lines):
         # Map based on statement type
         if stmt_type == 'BS':
             section = classify_bs_section(line_num, control_lines)
-            tag = item.get('tag', '')
             negating = item.get('negating', item.get('NEGATING', 0))
             datatype = item.get('datatype', '')
             is_sum = item.get('is_sum', False)
@@ -1132,11 +1285,16 @@ def map_statement(stmt_type, line_items, control_lines):
     return mappings, target_to_plabels
 
 
-def aggregate_by_target(target_to_plabels, line_items):
+def aggregate_by_target(target_to_plabels, line_items, control_lines=None):
     """Aggregate values by target across all source items and all periods.
 
     Also tracks calc graph info (is_sum, calc_children, source_tags) for each target
     to support skipping children of mapped sums in residual calculations.
+
+    Args:
+        target_to_plabels: Dict mapping target field to list of (plabel, line_num) tuples
+        line_items: List of line items from reconstructor
+        control_lines: Optional dict of control line numbers (to exclude from mapped set)
     """
     standardized = {}
 
@@ -1152,6 +1310,15 @@ def aggregate_by_target(target_to_plabels, line_items):
     for item in line_items:
         key = (item['plabel'], item.get('stmt_order', 0))
         item_lookup[key] = item
+
+    # Build set of NON-CONTROL mapped line numbers
+    # Used to detect if an item's parent is also mapped (for residual skip logic)
+    control_line_nums = set(control_lines.values()) if control_lines else set()
+    mapped_non_control_line_nums = set()
+    for target, source_items in target_to_plabels.items():
+        for plabel, line_num in source_items:
+            if line_num not in control_line_nums:
+                mapped_non_control_line_nums.add(line_num)
 
     for target, source_items in target_to_plabels.items():
         # Calculate aggregated values for EACH period
@@ -1177,6 +1344,7 @@ def aggregate_by_target(target_to_plabels, line_items):
         is_sum = False
         calc_children = []
         source_tags = []
+        has_mapped_parent = False  # True if parent is a non-control mapped item
         for plabel, line_num in source_items:
             item = item_lookup.get((plabel, line_num))
             if item:
@@ -1189,6 +1357,10 @@ def aggregate_by_target(target_to_plabels, line_items):
                     children = item.get('calc_children', [])
                     if children:
                         calc_children.extend(children)
+                # Check if parent is a non-control mapped item
+                parent_line = item.get('parent_line')
+                if parent_line is not None and parent_line in mapped_non_control_line_nums:
+                    has_mapped_parent = True
 
         standardized[target] = {
             'total_value': total_value,
@@ -1197,7 +1369,8 @@ def aggregate_by_target(target_to_plabels, line_items):
             'source_items': [plabel for plabel, _ in source_items],
             'source_tags': source_tags,  # XBRL tags mapped to this target
             'is_sum': is_sum,  # True if any source is a calc graph parent
-            'calc_children': calc_children  # [(child_tag, weight), ...] - children to skip in residual
+            'calc_children': calc_children,  # [(child_tag, weight), ...]
+            'has_mapped_parent': has_mapped_parent  # True if parent is non-control mapped item - skip in residual
         }
 
     return standardized
@@ -1354,22 +1527,31 @@ def validate_and_calculate_bs_residuals(standardized, control_lines, sic_code=No
     sections = {
         'other_current_assets': ('total_current_assets', [
             'cash_and_cash_equivalents', 'cash_and_short_term_investments', 'cash_cash_equivalent_and_restricted_cash',
-            'short_term_investments', 'account_receivables_net', 'other_receivables', 'inventory', 'prepaids'
+            'short_term_investments', 'account_receivables_net', 'other_receivables', 'inventory', 'prepaids',
+            # Financial company current asset items
+            'trading_and_derivative_assets_at_fair_value'
         ]),
         'other_non_current_assets': ('total_non_current_assets', [
             'property_plant_equipment_net', 'finance_lease_right_of_use_assets',
             'operating_lease_right_of_use_assets', 'lease_assets', 'long_term_investments', 'goodwill',
-            'intangible_assets', 'goodwill_and_intangible_assets', 'deferred_tax_assets'
+            'intangible_assets', 'goodwill_and_intangible_assets', 'deferred_tax_assets',
+            # Financial company non-current asset items
+            'investment_securities', 'loans_and_financing_receivables_net', 'insurance_assets', 'other_financial_assets'
         ]),
         'other_current_liabilities': ('total_current_liabilities', [
             'account_payables', 'accrued_payroll', 'accrued_expenses', 'short_term_debt',
             'deferred_revenue', 'tax_payables', 'dividends_payable', 'finance_lease_obligations_current',
-            'operating_lease_obligations_current', 'lease_obligation_current'
+            'operating_lease_obligations_current', 'lease_obligation_current',
+            # Financial company current liability items
+            'customer_and_policyholder_deposits', 'trading_and_derivative_liabilities_at_fair_value',
+            'loss_and_claims_reserves_and_payables'
         ]),
         'other_non_current_liabilities': ('total_non_current_liabilities', [
             'long_term_debt', 'pension_and_postretirement_benefits', 'deferred_revenue_non_current',
             'deferred_tax_liabilities_non_current', 'tax_payables_non_current', 'finance_lease_obligations_non_current',
-            'operating_lease_obligations_non_current', 'lease_obligation_non_current', 'commitments_and_contingencies'
+            'operating_lease_obligations_non_current', 'lease_obligation_non_current', 'commitments_and_contingencies',
+            # Financial company non-current liability items
+            'other_financial_liabilities'
         ])
     }
 
@@ -1395,9 +1577,12 @@ def validate_and_calculate_bs_residuals(standardized, control_lines, sic_code=No
             total_val = total_periods[period]
             sum_val = 0
 
-            # Sum all mapped items in this section
+            # Sum all mapped items in this section (skip if parent is also mapped)
             for item_field in item_fields:
                 if item_field in standardized:
+                    # Skip if this item's parent is a non-control mapped item (avoid double counting)
+                    if standardized[item_field].get('has_mapped_parent', False):
+                        continue
                     item_periods = get_period_values(item_field)
                     if period in item_periods:
                         # Treasury stock is contra-equity: subtract it from sum (so it adds to residual)
@@ -1427,6 +1612,8 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'cash_and_short_term_investments', 'label': 'Cash and short-term investments', 'indent': 1},
         {'type': 'item', 'field': 'cash_cash_equivalent_and_restricted_cash', 'label': 'Cash, cash equivalents and restricted cash', 'indent': 1},
         {'type': 'item', 'field': 'short_term_investments', 'label': 'Short-term investments', 'indent': 1},
+        # Financial company current asset items
+        {'type': 'item', 'field': 'trading_and_derivative_assets_at_fair_value', 'label': 'Trading assets and derivative instruments', 'indent': 1},
         {'type': 'item', 'field': 'account_receivables_net', 'label': 'Accounts receivable, net', 'indent': 1},
         {'type': 'item', 'field': 'other_receivables', 'label': 'Other receivables', 'indent': 1},
         {'type': 'item', 'field': 'inventory', 'label': 'Inventory', 'indent': 1},
@@ -1439,20 +1626,30 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'operating_lease_right_of_use_assets', 'label': 'Operating lease right-of-use assets', 'indent': 1},
         {'type': 'item', 'field': 'lease_assets', 'label': 'Lease right-of-use assets', 'indent': 1},
         {'type': 'item', 'field': 'long_term_investments', 'label': 'Long-term investments', 'indent': 1},
+        # Financial company non-current asset items
+        {'type': 'item', 'field': 'investment_securities', 'label': 'Investment securities', 'indent': 1},
+        {'type': 'item', 'field': 'loans_and_financing_receivables_net', 'label': 'Loans and financing receivables, net', 'indent': 1},
+        {'type': 'item', 'field': 'insurance_assets', 'label': 'Insurance-related assets', 'indent': 1},
         {'type': 'item', 'field': 'goodwill', 'label': 'Goodwill', 'indent': 1},
         {'type': 'item', 'field': 'intangible_assets', 'label': 'Intangible assets, net', 'indent': 1},
         {'type': 'item', 'field': 'goodwill_and_intangible_assets', 'label': 'Goodwill and intangible assets', 'indent': 1},
         {'type': 'item', 'field': 'deferred_tax_assets', 'label': 'Deferred tax assets', 'indent': 1},
+        {'type': 'item', 'field': 'other_financial_assets', 'label': 'Other financial assets', 'indent': 1},
         {'type': 'item', 'field': 'other_non_current_assets', 'label': 'Other non-current assets', 'indent': 1},
         {'type': 'subtotal', 'field': 'total_non_current_assets', 'label': 'Total Non-Current Assets'},
         {'type': 'subtotal', 'field': 'total_assets', 'label': 'TOTAL ASSETS'},
         {'type': 'blank'},
         {'type': 'major_section', 'label': 'LIABILITIES AND STOCKHOLDERS\' EQUITY'},
         {'type': 'section_header', 'label': 'Current Liabilities'},
+        # Financial company current liability items
+        {'type': 'item', 'field': 'customer_and_policyholder_deposits', 'label': 'Customer and policyholder deposits', 'indent': 1},
+        {'type': 'item', 'field': 'trading_and_derivative_liabilities_at_fair_value', 'label': 'Trading liabilities and derivative instruments', 'indent': 1},
+        {'type': 'item', 'field': 'loss_and_claims_reserves_and_payables', 'label': 'Loss reserves and claims payable', 'indent': 1},
         {'type': 'item', 'field': 'short_term_debt', 'label': 'Short-term debt', 'indent': 1},
         {'type': 'item', 'field': 'account_payables', 'label': 'Accounts payable', 'indent': 1},
         {'type': 'item', 'field': 'accrued_payroll', 'label': 'Accrued compensation', 'indent': 1},
         {'type': 'item', 'field': 'accrued_expenses', 'label': 'Accrued expenses', 'indent': 1},
+        {'type': 'item', 'field': 'accrued_interest_payable', 'label': 'Accrued interest payable', 'indent': 1},
         {'type': 'item', 'field': 'deferred_revenue', 'label': 'Deferred revenue', 'indent': 1},
         {'type': 'item', 'field': 'tax_payables', 'label': 'Income taxes payable', 'indent': 1},
         {'type': 'item', 'field': 'dividends_payable', 'label': 'Dividends payable', 'indent': 1},
@@ -1472,6 +1669,8 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'operating_lease_obligations_non_current', 'label': 'Operating lease liabilities - non-current', 'indent': 1},
         {'type': 'item', 'field': 'lease_obligation_non_current', 'label': 'Lease liabilities - non-current', 'indent': 1},
         {'type': 'item', 'field': 'commitments_and_contingencies', 'label': 'Commitments and contingencies', 'indent': 1},
+        # Financial company non-current liability items
+        {'type': 'item', 'field': 'other_financial_liabilities', 'label': 'Other financial liabilities', 'indent': 1},
         {'type': 'item', 'field': 'other_non_current_liabilities', 'label': 'Other non-current liabilities', 'indent': 1},
         {'type': 'subtotal', 'field': 'total_non_current_liabilities', 'label': 'Total Non-Current Liabilities'},
         {'type': 'subtotal', 'field': 'total_liabilities', 'label': 'Total Liabilities'},
@@ -1803,7 +2002,7 @@ def create_excel_workbook(results, company_name, ticker):
             ws.merge_cells(f'{col_letter}{row}:{end_col_letter}{row}')
             row += 1
 
-            # Headers for standardized - Item + all periods
+            # Headers for standardized - Item + all periods + Source Items
             col_letter = get_column_letter(std_start_col)
             ws[f'{col_letter}{row}'] = "Item"
             ws[f'{col_letter}{row}'].font = header_font
@@ -1814,6 +2013,13 @@ def create_excel_workbook(results, company_name, ticker):
                 ws[f'{col_letter}{row}'] = period.get('label', '')
                 ws[f'{col_letter}{row}'].font = header_font
                 ws[f'{col_letter}{row}'].fill = header_fill
+
+            # Add "Mapped From" column header after period columns
+            source_col = std_start_col + 1 + num_periods
+            source_col_letter = get_column_letter(source_col)
+            ws[f'{source_col_letter}{row}'] = "Mapped From (plabels)"
+            ws[f'{source_col_letter}{row}'].font = header_font
+            ws[f'{source_col_letter}{row}'].fill = header_fill
 
             row += 1
 
@@ -1852,6 +2058,10 @@ def create_excel_workbook(results, company_name, ticker):
                             if value and not pd.isna(value):
                                 ws[f'{col_letter}{row}'] = float(value)
                                 ws[f'{col_letter}{row}'].number_format = '#,##0'
+                        # Add source items (mapped plabels)
+                        source_items = standardized[field].get('source_items', [])
+                        if source_items:
+                            ws[f'{source_col_letter}{row}'] = '; '.join(source_items)
                         row += 1
                 elif line_type == 'subtotal':
                     field = line['field']
@@ -1869,6 +2079,10 @@ def create_excel_workbook(results, company_name, ticker):
                                 ws[f'{col_letter}{row}'] = float(value)
                                 ws[f'{col_letter}{row}'].number_format = '#,##0'
                                 ws[f'{col_letter}{row}'].font = subtotal_font
+                        # Add source items (mapped plabels)
+                        source_items = standardized[field].get('source_items', [])
+                        if source_items:
+                            ws[f'{source_col_letter}{row}'] = '; '.join(source_items)
                         row += 1
                 elif line_type == 'total':
                     field = line['field']
@@ -1886,6 +2100,10 @@ def create_excel_workbook(results, company_name, ticker):
                                 ws[f'{col_letter}{row}'] = float(value)
                                 ws[f'{col_letter}{row}'].number_format = '#,##0'
                                 ws[f'{col_letter}{row}'].font = total_font
+                        # Add source items (mapped plabels)
+                        source_items = standardized[field].get('source_items', [])
+                        if source_items:
+                            ws[f'{source_col_letter}{row}'] = '; '.join(source_items)
                         row += 1
 
         # Column widths - dynamic based on number of periods
@@ -1903,13 +2121,15 @@ def create_excel_workbook(results, company_name, ticker):
         for col_idx in range(std_start_col + 1, std_start_col + 1 + num_periods):
             col_letter = get_column_letter(col_idx)
             ws.column_dimensions[col_letter].width = 20
+        # Mapped From column (after period columns)
+        source_col = std_start_col + 1 + num_periods
+        ws.column_dimensions[get_column_letter(source_col)].width = 60
 
     return wb
 
 
 def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
     """Main function to map all three financial statements"""
-
     print(f"\n{'='*80}")
     print(f"MAPPING FINANCIAL STATEMENTS")
     print(f"{'='*80}")
@@ -1934,7 +2154,7 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
         if use_strategy2:
             print(f"   📌 Using Strategy 2 (unclassified balance sheet - missing total_current_assets or total_current_liabilities)")
             mappings, target_to_plabels = map_balance_sheet_strategy2(bs_result['line_items'], control_lines)
-            standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'])
+            standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'], control_lines)
 
             # Calculate residuals for Strategy 2 (other_assets, other_liabilities)
             standardized = calculate_residuals_strategy2(standardized_base, control_lines)
@@ -1942,7 +2162,7 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
         else:
             print(f"   📌 Using Strategy 1 (classified balance sheet)")
             mappings, target_to_plabels = map_statement('BS', bs_result['line_items'], control_lines)
-            standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'])
+            standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'], control_lines)
 
             # Validate and calculate residual other_* items
             standardized, status = validate_and_calculate_bs_residuals(standardized_base, control_lines, sic_code=None)
