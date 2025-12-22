@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from sqlalchemy import create_engine, text
 from config import config
 
 
@@ -88,17 +89,25 @@ class StatementReconstructor:
         )
     """
 
-    def __init__(self, year: int = 2024, quarter: int = 3):
+    def __init__(self, year: int = 2024, quarter: int = 3, use_db: bool = True, verbose: bool = False):
         """
         Initialize reconstructor for specific quarter
 
         Args:
             year: Year (e.g., 2024)
             quarter: Quarter (1-4)
+            use_db: If True, query from database tables (faster).
+                   If False, load from .txt files (original behavior).
+            verbose: If True, print detailed progress messages. Default False.
         """
         self.year = year
         self.quarter = quarter
+        self.use_db = use_db
+        self.verbose = verbose
         self.base_dir = config.storage.extracted_dir / f'{year}q{quarter}'
+
+        # Database engine (lazy init)
+        self._engine = None
 
         # Cache for loaded data (avoid reloading large files)
         self._pre_df: Optional[pd.DataFrame] = None
@@ -106,16 +115,27 @@ class StatementReconstructor:
         self._tag_df: Optional[pd.DataFrame] = None
         self._sub_df: Optional[pd.DataFrame] = None
 
+    def _log(self, message: str):
+        """Print message only if verbose mode is enabled"""
+        if self.verbose:
+            print(message)
+
+    def _get_engine(self):
+        """Get SQLAlchemy engine (lazy initialization)"""
+        if self._engine is None:
+            self._engine = create_engine(config.get_db_connection())
+        return self._engine
+
     def _load_table(self, table_name: str) -> pd.DataFrame:
         """Load EDGAR table with caching"""
         cache_attr = f'_{table_name}_df'
 
         if getattr(self, cache_attr) is None:
             file_path = self.base_dir / f'{table_name}.txt'
-            print(f"Loading {table_name}.txt...")
+            self._log(f"Loading {table_name}.txt...")
             df = pd.read_csv(file_path, sep='\t', dtype=str, low_memory=False)
             setattr(self, cache_attr, df)
-            print(f"  Loaded {len(df):,} rows")
+            self._log(f"  Loaded {len(df):,} rows")
 
         return getattr(self, cache_attr)
 
@@ -129,7 +149,85 @@ class StatementReconstructor:
         Returns:
             Dict with 'pre', 'num', 'tag' DataFrames and 'sub' metadata Series
         """
-        print(f"\nLoading filing data for {adsh}...")
+        if self.use_db:
+            return self._load_filing_data_from_db(adsh)
+        else:
+            return self._load_filing_data_from_files(adsh)
+
+    def _load_filing_data_from_db(self, adsh: str) -> Dict:
+        """Load filing data from PostgreSQL database (fast)"""
+        self._log(f"\nLoading filing data for {adsh} from database...")
+
+        engine = self._get_engine()
+
+        # Query PRE data for this filing
+        filing_pre = pd.read_sql(
+            text("""
+                SELECT adsh, report, line, stmt, inpth, rfile, tag, version, plabel, negating
+                FROM edgar_pre
+                WHERE adsh = :adsh AND source_year = :year AND source_quarter = :quarter
+            """),
+            engine,
+            params={'adsh': adsh, 'year': self.year, 'quarter': self.quarter}
+        )
+
+        # Query NUM data for this filing
+        filing_num = pd.read_sql(
+            text("""
+                SELECT adsh, tag, version, ddate, qtrs, uom, segments, coreg, value, footnote
+                FROM edgar_num
+                WHERE adsh = :adsh AND source_year = :year AND source_quarter = :quarter
+            """),
+            engine,
+            params={'adsh': adsh, 'year': self.year, 'quarter': self.quarter}
+        )
+
+        # Query TAG data - get all tags used in this filing
+        tags_in_filing = set(filing_pre['tag'].tolist()) | set(filing_num['tag'].tolist())
+        if tags_in_filing:
+            tag_df = pd.read_sql(
+                text("""
+                    SELECT tag, version, custom, abstract, datatype, iord, crdr, tlabel, doc
+                    FROM edgar_tag
+                    WHERE tag = ANY(:tags) AND source_year = :year AND source_quarter = :quarter
+                """),
+                engine,
+                params={'tags': list(tags_in_filing), 'year': self.year, 'quarter': self.quarter}
+            )
+        else:
+            tag_df = pd.DataFrame()
+
+        # Query SUB data from filings table
+        filing_sub_df = pd.read_sql(
+            text("""
+                SELECT adsh, cik, company_name as name, form_type as form,
+                       fiscal_year as fy, fiscal_period as fp, filed_date, period_end_date
+                FROM filings
+                WHERE adsh = :adsh
+            """),
+            engine,
+            params={'adsh': adsh}
+        )
+
+        if len(filing_sub_df) == 0:
+            raise ValueError(f"Filing {adsh} not found in filings table")
+
+        filing_sub = filing_sub_df.iloc[0]
+
+        self._log(f"  PRE rows: {len(filing_pre):,}")
+        self._log(f"  NUM rows: {len(filing_num):,}")
+        self._log(f"  Filing: {filing_sub['name']} {filing_sub['form']} FY{filing_sub['fy']} {filing_sub['fp']}")
+
+        return {
+            'pre': filing_pre,
+            'num': filing_num,
+            'tag': tag_df,
+            'sub': filing_sub
+        }
+
+    def _load_filing_data_from_files(self, adsh: str) -> Dict:
+        """Load filing data from .txt files (original behavior)"""
+        self._log(f"\nLoading filing data for {adsh} from files...")
 
         # Load full tables (cached)
         pre_df = self._load_table('pre')
@@ -147,9 +245,9 @@ class StatementReconstructor:
 
         filing_sub = filing_sub.iloc[0]  # Get as Series
 
-        print(f"  PRE rows: {len(filing_pre):,}")
-        print(f"  NUM rows: {len(filing_num):,}")
-        print(f"  Filing: {filing_sub['name']} {filing_sub['form']} FY{filing_sub['fy']} {filing_sub['fp']}")
+        self._log(f"  PRE rows: {len(filing_pre):,}")
+        self._log(f"  NUM rows: {len(filing_num):,}")
+        self._log(f"  Filing: {filing_sub['name']} {filing_sub['form']} FY{filing_sub['fy']} {filing_sub['fp']}")
 
         return {
             'pre': filing_pre,
@@ -184,7 +282,7 @@ class StatementReconstructor:
         stmt_df = pre_df[pre_df['stmt'] == stmt].copy()
 
         if len(stmt_df) == 0:
-            print(f"  Warning: No {stmt} statement found in PRE table")
+            self._log(f"  Warning: No {stmt} statement found in PRE table")
             return None
 
         # Many filings have multiple "reports" for one statement
@@ -195,9 +293,9 @@ class StatementReconstructor:
             report_counts = stmt_df.groupby('report').size()
             main_report = report_counts.idxmax()
             stmt_df = stmt_df[stmt_df['report'] == main_report].copy()
-            print(f"\nBuilding hierarchy for {stmt} statement (report {main_report}, {len(stmt_df)} rows)...")
+            self._log(f"\nBuilding hierarchy for {stmt} statement (report {main_report}, {len(stmt_df)} rows)...")
         else:
-            print(f"\nBuilding hierarchy for {stmt} statement ({len(stmt_df)} rows)...")
+            self._log(f"\nBuilding hierarchy for {stmt} statement ({len(stmt_df)} rows)...")
 
         # Sort by line number to process in presentation order
         stmt_df = stmt_df.sort_values('line')
@@ -215,7 +313,7 @@ class StatementReconstructor:
 
         if is_flat:
             # Flat structure: Create a virtual root and attach all as children
-            print("  Detected flat structure (all items at level 0)")
+            self._log("  Detected flat structure (all items at level 0)")
             root = StatementNode(
                 tag=f'{stmt}_ROOT',
                 plabel=f'{stmt} Statement',
@@ -241,7 +339,7 @@ class StatementReconstructor:
             return root
 
         # Hierarchical structure: Build tree
-        print("  Detected hierarchical structure")
+        self._log("  Detected hierarchical structure")
         root = None
         stack = []  # Track current parent at each level
 
@@ -295,7 +393,7 @@ class StatementReconstructor:
                     else:
                         stack[node.level] = node
                 else:
-                    print(f"  Warning: Orphan node {node.tag} at level {node.level}")
+                    self._log(f"  Warning: Orphan node {node.tag} at level {node.level}")
 
         return root
 
@@ -319,7 +417,7 @@ class StatementReconstructor:
         Returns:
             Hierarchy with values and metadata attached
         """
-        print(f"\nAttaching values from NUM table ({len(num_df):,} rows)...")
+        self._log(f"\nAttaching values from NUM table ({len(num_df):,} rows)...")
 
         # Convert value to float
         num_df = num_df.copy()
@@ -362,7 +460,7 @@ class StatementReconstructor:
             target_ddate = period
             target_qtrs = '0'
 
-        print(f"  Filtering NUM to: ddate={target_ddate}, qtrs={target_qtrs}, segments=NaN, coreg=NaN")
+        self._log(f"  Filtering NUM to: ddate={target_ddate}, qtrs={target_qtrs}, segments=NaN, coreg=NaN")
 
         # Get all available instant dates for beginning cash inference
         instant_dates_all = num_df[(num_df['qtrs'] == '0') &
@@ -370,7 +468,7 @@ class StatementReconstructor:
                                    (num_df['coreg'].isna())]['ddate'].unique()
         instant_dates_all = sorted(instant_dates_all)
 
-        print(f"  Available instant dates: {len(instant_dates_all)} dates")
+        self._log(f"  Available instant dates: {len(instant_dates_all)} dates")
 
         def infer_beginning_cash_date(ending_ddate: str, qtrs: str) -> str:
             """
@@ -539,7 +637,7 @@ class StatementReconstructor:
             return count
 
         value_count = count_values(hierarchy)
-        print(f"  Attached {value_count} values")
+        self._log(f"  Attached {value_count} values")
 
         return hierarchy
 
@@ -570,8 +668,8 @@ class StatementReconstructor:
         target_ddate = period['ddate']
         target_qtrs = period['qtrs']
 
-        print(f"  Attaching values for period: {period['label']}")
-        print(f"    ddate={target_ddate}, qtrs={target_qtrs}")
+        self._log(f"  Attaching values for period: {period['label']}")
+        self._log(f"    ddate={target_ddate}, qtrs={target_qtrs}")
 
         # Convert value to float
         num_df = num_df.copy()
@@ -700,7 +798,7 @@ class StatementReconstructor:
         value_count = len([1 for node in self._get_all_nodes(hierarchy)
                           if len(node.values) > 0])
 
-        print(f"    Attached values for {value_count} line items")
+        self._log(f"    Attached values for {value_count} line items")
 
         return hierarchy
 
@@ -733,7 +831,7 @@ class StatementReconstructor:
                 - 'errors': List of validation errors
                 - 'warnings': List of warnings
         """
-        print(f"\nValidating hierarchy rollups (tolerance: {tolerance}%)...")
+        self._log(f"\nValidating hierarchy rollups (tolerance: {tolerance}%)...")
 
         errors = []
         warnings = []
@@ -789,14 +887,14 @@ class StatementReconstructor:
 
         is_valid = len(errors) == 0
 
-        print(f"  Validation: {'PASS' if is_valid else 'FAIL'}")
-        print(f"  Errors: {len(errors)}")
-        print(f"  Warnings: {len(warnings)}")
+        self._log(f"  Validation: {'PASS' if is_valid else 'FAIL'}")
+        self._log(f"  Errors: {len(errors)}")
+        self._log(f"  Warnings: {len(warnings)}")
 
         if errors:
-            print("\n  Top errors:")
+            self._log("\n  Top errors:")
             for err in errors[:5]:
-                print(f"    {err['label']}: ${err['parent_value']:,.0f} != ${err['child_sum']:,.0f} ({err['diff_pct']:.2f}% diff)")
+                self._log(f"    {err['label']}: ${err['parent_value']:,.0f} != ${err['child_sum']:,.0f} ({err['diff_pct']:.2f}% diff)")
 
         return {
             'valid': is_valid,
@@ -918,10 +1016,10 @@ class StatementReconstructor:
                 - 'metadata': Filing metadata
                 - 'flat_data': Flattened tag->value dict
         """
-        print(f"\n{'='*60}")
-        print(f"Reconstructing {stmt_type} statement")
-        print(f"CIK: {cik}, ADSH: {adsh}")
-        print(f"{'='*60}")
+        self._log(f"\n{'='*60}")
+        self._log(f"Reconstructing {stmt_type} statement")
+        self._log(f"CIK: {cik}, ADSH: {adsh}")
+        self._log(f"{'='*60}")
 
         # Step 1: Load filing data
         filing_data = self.load_filing_data(adsh)
@@ -949,11 +1047,11 @@ class StatementReconstructor:
         calc_source = None
         try:
             from xbrl_loader import load_calc_graph_with_fallback
-            calc_graph, calc_source = load_calc_graph_with_fallback(cik, adsh)
+            calc_graph, calc_source = load_calc_graph_with_fallback(cik, adsh, verbose=self.verbose)
             marked_count = self._mark_sum_items(hierarchy, calc_graph)
-            print(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
+            self._log(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
         except Exception as e:
-            print(f"  Warning: Could not load calc graph: {e}")
+            self._log(f"  Warning: Could not load calc graph: {e}")
 
         # Step 6: Create flat list with full metadata for each line item
         line_items = []
@@ -1019,9 +1117,9 @@ class StatementReconstructor:
         cik_padded = str(cik).zfill(10)
         edgar_url = f"https://www.sec.gov/cgi-bin/viewer?action=view&cik={cik_padded}&accession_number={adsh}&xbrl_type=v"
 
-        print(f"\nReconstruction complete!")
-        print(f"  Total line items: {len(line_items)}")
-        print(f"  EDGAR viewer: {edgar_url}")
+        self._log(f"\nReconstruction complete!")
+        self._log(f"  Total line items: {len(line_items)}")
+        self._log(f"  EDGAR viewer: {edgar_url}")
 
         return {
             'hierarchy': hierarchy,
@@ -1065,10 +1163,10 @@ class StatementReconstructor:
                 - 'line_items': List of dicts with multi-period values
                 - 'metadata': Filing metadata
         """
-        print(f"\n{'='*60}")
-        print(f"Reconstructing {stmt_type} statement (MULTI-PERIOD)")
-        print(f"CIK: {cik}, ADSH: {adsh}")
-        print(f"{'='*60}")
+        self._log(f"\n{'='*60}")
+        self._log(f"Reconstructing {stmt_type} statement (MULTI-PERIOD)")
+        self._log(f"CIK: {cik}, ADSH: {adsh}")
+        self._log(f"{'='*60}")
 
         # Step 1: Load filing data
         filing_data = self.load_filing_data(adsh)
@@ -1096,9 +1194,9 @@ class StatementReconstructor:
             stmt_type
         )
 
-        print(f"\nDiscovered {len(periods)} periods:")
+        self._log(f"\nDiscovered {len(periods)} periods:")
         for p in periods:
-            print(f"  - {p['label']} (ddate={p['ddate']}, qtrs={p['qtrs']})")
+            self._log(f"  - {p['label']} (ddate={p['ddate']}, qtrs={p['qtrs']})")
 
         # Step 4: Attach metadata from TAG table (do once)
         # This sets iord, crdr, etc. which don't change across periods
@@ -1133,11 +1231,11 @@ class StatementReconstructor:
         calc_source = None
         try:
             from xbrl_loader import load_calc_graph_with_fallback
-            calc_graph, calc_source = load_calc_graph_with_fallback(cik, adsh)
+            calc_graph, calc_source = load_calc_graph_with_fallback(cik, adsh, verbose=self.verbose)
             marked_count = self._mark_sum_items(hierarchy, calc_graph)
-            print(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
+            self._log(f"  Calc graph loaded ({calc_source}): {len(calc_graph)} parent tags, {marked_count} nodes marked as sum items")
         except Exception as e:
-            print(f"  Warning: Could not load calc graph: {e}")
+            self._log(f"  Warning: Could not load calc graph: {e}")
 
         # Step 5c: Build reverse lookup from calc_children: child_tag -> parent_line
         # This tells us for each tag, what is its calc graph parent's line number
@@ -1352,10 +1450,10 @@ class StatementReconstructor:
         cik_padded = str(cik).zfill(10)
         edgar_url = f"https://www.sec.gov/cgi-bin/viewer?action=view&cik={cik_padded}&accession_number={adsh}&xbrl_type=v"
 
-        print(f"\nMulti-period reconstruction complete!")
-        print(f"  Total line items: {len(line_items)}")
-        print(f"  Periods: {len(periods)}")
-        print(f"  EDGAR viewer: {edgar_url}")
+        self._log(f"\nMulti-period reconstruction complete!")
+        self._log(f"  Total line items: {len(line_items)}")
+        self._log(f"  Periods: {len(periods)}")
+        self._log(f"  EDGAR viewer: {edgar_url}")
 
         return {
             'hierarchy': hierarchy,

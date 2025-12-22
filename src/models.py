@@ -3,9 +3,8 @@ SQLAlchemy Models for SEC Filing Database
 ==========================================
 Defines database schema using SQLAlchemy ORM.
 
-Storage Strategy (Hybrid Approach):
-- PostgreSQL: Filing index, company index, dataset tracking
-- File System: Raw .txt files (num, pre, tag, sub) - read by statement_reconstructor
+Storage Strategy:
+- PostgreSQL: All data including pre, num, tag tables for fast queries
 
 Author: Finexus Team
 Date: November 2025
@@ -13,7 +12,7 @@ Date: November 2025
 
 from sqlalchemy import (
     Column, String, Integer, Date, DateTime, Boolean,
-    Numeric, Text, ARRAY, ForeignKey, Index
+    Numeric, Text, ARRAY, ForeignKey, Index, BigInteger, Float
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -30,6 +29,8 @@ class Company(Base):
     company_name = Column(String(500))
     sic = Column(String(4))
     industry_description = Column(String(255))
+    ticker = Column(String(10))
+    exchange = Column(String(10))
     first_filing_date = Column(Date)
     last_filing_date = Column(Date)
     total_filings = Column(Integer, default=0)
@@ -44,6 +45,7 @@ class Company(Base):
         Index('idx_companies_name', 'company_name'),
         Index('idx_companies_sic', 'sic'),
         Index('idx_companies_last_filing', 'last_filing_date'),
+        Index('ix_companies_ticker', 'ticker'),
     )
 
     def __repr__(self):
@@ -64,12 +66,12 @@ class Filing(Base):
     filed_date = Column(Date)
     period_end_date = Column(Date)
     fiscal_year = Column(Integer)
-    fiscal_period = Column(String(10))
+    fiscal_period = Column(String(20))
 
     # Additional metadata from SUB table
     sic = Column(String(4))
-    countryba = Column(String(2))
-    stprba = Column(String(2))
+    countryba = Column(String(5))
+    stprba = Column(String(5))
     cityba = Column(String(50))
     zipba = Column(String(10))
     bas1 = Column(String(255))
@@ -154,3 +156,126 @@ class Dataset(Base):
 
     def __repr__(self):
         return f"<Dataset(year={self.year}, quarter={self.quarter}, status={self.download_status})>"
+
+
+class EdgarPre(Base):
+    """
+    Presentation linkbase data (from pre.txt)
+    Defines statement structure: which tags appear in which statements, in what order
+    """
+    __tablename__ = 'edgar_pre'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+
+    # Filing reference (no FK - SEC data has orphaned records)
+    adsh = Column(String(20), nullable=False)
+
+    # Statement structure
+    report = Column(Integer)  # Report number within filing
+    line = Column(Integer)    # Line number within report
+    stmt = Column(String(2))  # Statement type: BS, IS, CF, EQ, CI, UN
+    inpth = Column(Integer)   # Indentation level (0=parent, 1=child, etc.)
+    rfile = Column(String(1)) # Report file: H=htm, X=xml
+
+    # Tag reference
+    tag = Column(String(256), nullable=False)
+    version = Column(String(20))  # Taxonomy version (e.g., us-gaap/2024)
+
+    # Presentation
+    plabel = Column(String(512))  # Preferred label
+    negating = Column(String(1))  # '1' if value should be negated
+
+    # Source tracking
+    source_year = Column(Integer, nullable=False)
+    source_quarter = Column(Integer, nullable=False)
+
+    __table_args__ = (
+        Index('idx_edgar_pre_adsh', 'adsh'),
+        Index('idx_edgar_pre_adsh_stmt', 'adsh', 'stmt'),
+        Index('idx_edgar_pre_tag', 'tag'),
+        Index('idx_edgar_pre_source', 'source_year', 'source_quarter'),
+    )
+
+    def __repr__(self):
+        return f"<EdgarPre(adsh='{self.adsh}', stmt='{self.stmt}', line={self.line}, tag='{self.tag}')>"
+
+
+class EdgarNum(Base):
+    """
+    Numeric facts data (from num.txt)
+    Contains actual financial values reported in filings
+    """
+    __tablename__ = 'edgar_num'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+
+    # Filing reference (no FK - SEC data has orphaned records)
+    adsh = Column(String(20), nullable=False)
+
+    # Tag reference
+    tag = Column(String(256), nullable=False)
+    version = Column(String(20))  # Taxonomy version
+
+    # Period information
+    ddate = Column(String(8))   # Period end date (YYYYMMDD format)
+    qtrs = Column(String(8))    # Number of quarters (0=instant, 1=Q, 4=FY)
+
+    # Value details
+    uom = Column(String(20))    # Unit of measure (USD, shares, etc.)
+    segments = Column(Text)     # Dimensional segments (JSON-like)
+    coreg = Column(String(256)) # Co-registrant
+    value = Column(Numeric(28, 4))  # The actual numeric value (28 digits, 4 decimal places for large financials)
+    footnote = Column(Text)     # Footnote reference
+
+    # Source tracking
+    source_year = Column(Integer, nullable=False)
+    source_quarter = Column(Integer, nullable=False)
+
+    __table_args__ = (
+        Index('idx_edgar_num_adsh', 'adsh'),
+        Index('idx_edgar_num_adsh_tag', 'adsh', 'tag'),
+        Index('idx_edgar_num_tag', 'tag'),
+        Index('idx_edgar_num_ddate', 'ddate'),
+        Index('idx_edgar_num_source', 'source_year', 'source_quarter'),
+    )
+
+    def __repr__(self):
+        return f"<EdgarNum(adsh='{self.adsh}', tag='{self.tag}', value={self.value})>"
+
+
+class EdgarTag(Base):
+    """
+    Tag definitions (from tag.txt)
+    Contains metadata about XBRL tags used in filings
+    """
+    __tablename__ = 'edgar_tag'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+
+    # Tag identification (composite unique)
+    tag = Column(String(256), nullable=False)
+    version = Column(String(20), nullable=False)  # Taxonomy version
+
+    # Tag properties
+    custom = Column(String(1))    # '1' if custom tag (not standard taxonomy)
+    abstract = Column(String(1))  # '1' if abstract (no value)
+    datatype = Column(String(50)) # Data type (monetary, shares, etc.)
+    iord = Column(String(1))      # I=instant, D=duration
+    crdr = Column(String(1))      # C=credit, D=debit
+
+    # Documentation
+    tlabel = Column(String(512))  # Tag label
+    doc = Column(Text)            # Tag documentation
+
+    # Source tracking
+    source_year = Column(Integer, nullable=False)
+    source_quarter = Column(Integer, nullable=False)
+
+    __table_args__ = (
+        Index('idx_edgar_tag_tag', 'tag'),
+        Index('idx_edgar_tag_tag_version', 'tag', 'version'),
+        Index('idx_edgar_tag_source', 'source_year', 'source_quarter'),
+    )
+
+    def __repr__(self):
+        return f"<EdgarTag(tag='{self.tag}', version='{self.version}')>"

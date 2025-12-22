@@ -440,7 +440,7 @@ def load_calc_graph(cik: int, adsh: str, cache_dir: Path = None) -> Dict[str, Li
 # US-GAAP Standard Taxonomy Support (for Inline XBRL filings)
 # =============================================================================
 
-def load_us_gaap_calc_linkbase(taxonomy_year: int = 2023, cache_dir: Path = None) -> Dict[str, List[Tuple[str, float]]]:
+def load_us_gaap_calc_linkbase(taxonomy_year: int = 2023, cache_dir: Path = None, verbose: bool = False) -> Dict[str, List[Tuple[str, float]]]:
     """
     Load the standard US-GAAP taxonomy calculation linkbase for a given year.
 
@@ -451,6 +451,7 @@ def load_us_gaap_calc_linkbase(taxonomy_year: int = 2023, cache_dir: Path = None
     Args:
         taxonomy_year: The US-GAAP taxonomy year (2023, 2024, etc.)
         cache_dir: Optional cache directory
+        verbose: If True, print progress messages
 
     Returns:
         dict: Combined calc graph from all statement types
@@ -474,7 +475,8 @@ def load_us_gaap_calc_linkbase(taxonomy_year: int = 2023, cache_dir: Path = None
     combined_graph = defaultdict(list)
 
     for url in urls:
-        print(f"  Fetching: {url.split('/')[-1]}")
+        if verbose:
+            print(f"  Fetching: {url.split('/')[-1]}")
         try:
             time.sleep(RATE_LIMIT_DELAY)
             resp = requests.get(url, headers=HEADERS, timeout=60)
@@ -509,7 +511,8 @@ def load_us_gaap_calc_linkbase(taxonomy_year: int = 2023, cache_dir: Path = None
                         combined_graph[parent_tag].append((child_tag, weight, order))
 
         except requests.exceptions.RequestException as e:
-            print(f"    Warning: Failed to fetch {url}: {e}")
+            if verbose:
+                print(f"    Warning: Failed to fetch {url}: {e}")
             continue
 
     # Sort children by order and remove order from result
@@ -523,7 +526,8 @@ def load_us_gaap_calc_linkbase(taxonomy_year: int = 2023, cache_dir: Path = None
     with open(cache_file, 'w') as f:
         json.dump(result, f, indent=2)
 
-    print(f"  Loaded {len(result)} parent tags from US-GAAP {taxonomy_year} taxonomy")
+    if verbose:
+        print(f"  Loaded {len(result)} parent tags from US-GAAP {taxonomy_year} taxonomy")
     return result
 
 
@@ -561,7 +565,7 @@ def detect_taxonomy_year_from_filing(cik: int, adsh: str) -> int:
         return 2023  # Default
 
 
-def load_calc_graph_with_fallback(cik: int, adsh: str, cache_dir: Path = None) -> Tuple[Dict[str, List[Tuple[str, float]]], str]:
+def load_calc_graph_with_fallback(cik: int, adsh: str, cache_dir: Path = None, verbose: bool = False) -> Tuple[Dict[str, List[Tuple[str, float]]], str]:
     """
     Load calculation graph, with fallback chain:
     1. Filing-specific calc linkbase (_cal.xml)
@@ -572,6 +576,7 @@ def load_calc_graph_with_fallback(cik: int, adsh: str, cache_dir: Path = None) -
         cik: Company CIK number
         adsh: Filing ADSH
         cache_dir: Optional cache directory
+        verbose: If True, print progress messages
 
     Returns:
         tuple: (calc_graph, source)
@@ -590,15 +595,17 @@ def load_calc_graph_with_fallback(cik: int, adsh: str, cache_dir: Path = None) -
     # Try 2: Embedded calc linkbase in schema file (.xsd)
     try:
         calc_graph = load_calc_graph_from_schema(cik, adsh, cache_dir)
-        print(f"  Loaded calc graph from embedded linkbase in schema ({len(calc_graph)} parent tags)")
+        if verbose:
+            print(f"  Loaded calc graph from embedded linkbase in schema ({len(calc_graph)} parent tags)")
         return calc_graph, "schema"
     except FileNotFoundError:
         pass
 
     # Try 3: Fallback to US-GAAP standard taxonomy
-    print("  No filing-specific calc linkbase found, using US-GAAP standard taxonomy...")
+    if verbose:
+        print("  No filing-specific calc linkbase found, using US-GAAP standard taxonomy...")
     taxonomy_year = detect_taxonomy_year_from_filing(cik, adsh)
-    calc_graph = load_us_gaap_calc_linkbase(taxonomy_year, cache_dir)
+    calc_graph = load_us_gaap_calc_linkbase(taxonomy_year, cache_dir, verbose=verbose)
     return calc_graph, f"us-gaap-{taxonomy_year}"
 
 

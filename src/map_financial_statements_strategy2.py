@@ -24,7 +24,7 @@ def normalize(text):
     """Normalize text for matching"""
     if not text:
         return ""
-    return text.lower().replace('-', ' ').replace(',', '').replace('  ', ' ').strip()
+    return text.lower().replace('-', ' ').replace(',', '').replace(':', '').replace("'", "").replace('  ', ' ').strip()
 
 
 def is_non_current_pattern(p):
@@ -83,9 +83,11 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
         # Cash items
         if 'cash' in p and 'restricted' in p:
             return 'cash_cash_equivalent_and_restricted_cash'
-        if 'cash and short term' in p or 'cash cash equivalents and short term investments' in p or 'cash cash equivalents and marketable securities' in p:
+        if ('cash and short term' in p or 'cash cash equivalents and short term investments' in p 
+            or 'cash cash equivalents and marketable securities' in p) and 'collateral' not in p:
             return 'cash_and_short_term_investments'
-        if ('cash' in p and 'restricted cash' != p) and ('total cash cash equivalents and marketable securities' != p) and ('total cash cash equivalents and short term investments' != p):
+        if (('cash' in p and 'restricted cash' != p) and ('total cash cash equivalents and marketable securities' != p) 
+            and ('total cash cash equivalents and short term investments' != p)) and ('collateral' not in p):
             return 'cash_and_cash_equivalents'
 
         # Investments - use pattern to determine current vs non-current
@@ -99,6 +101,9 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
                 if 'marketable' in p:
                     return 'short_term_investments'
                 return 'long_term_investments'
+        
+        if 'short term investment' in p:
+                return 'short_term_investments'
 
         # Receivables
         if ('trade' in p and ('receivable' in p or 'receivables' in p)) or \
@@ -108,6 +113,10 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
                             and ('other' not in p and 'tax' not in p and 'financ' not in p and 'loan' not in p  
                                             and 'interest' not in p and 'accrued' not in p )):
             return 'account_receivables_net'
+        
+        if p == 'receivables':
+            return 'account_receivables_net'
+        
         if 'other receivable' in p or 'other account receivable' in p or 'other accounts receivable' in p:
             return 'other_receivables'
 
@@ -122,11 +131,12 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
 
         # Property, plant and equipment
         if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p 
-             or 'fixed assets' in p or 'premise' in p) and
-            ('net' in p or 'less' in p)) and ('gross' not in t and 'gross' not in p and 'cost' not in p):
+             or 'fixed assets' in p or 'premise' in p) ) and ('gross' not in t and 'gross' not in p and 'cost' not in p):
             return 'property_plant_equipment_net'
         
         if 'equity method' in p and 'investment' in p:
+            return 'long_term_investments'
+        if 'long term investment' in p:
             return 'long_term_investments'
 
 
@@ -163,9 +173,9 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
 
         # Trading and derivative assets
         if (('trading' in p or 'equity securit' in p or 'investment' in p) and \
-            'fair value' in p) and ('income investment' not in p and 'loan' not in p):
+            'fair value' in p) and ('income investment' not in p and 'loan' not in p and 'held to maturity' not in p and 'available for sale' not in p):
             return 'trading_and_derivative_assets_at_fair_value'
-        if 'derivative' in p and ('asset' in p or 'assets' in p):
+        if 'derivative' in p:
             return 'trading_and_derivative_assets_at_fair_value'
 
         # Investment securities
@@ -176,7 +186,7 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
             return 'investment_securities'
 
         # Loans and financing receivables
-        if 'resell' in p or 'resale' in p:
+        if 'resell' in p or 'resale' in p or 'repurchase' in p:
             return 'loans_and_financing_receivables_net'
         if (('loan' in p or 'mortgage' in p or 'lease' in p) and ('held for sale' in p or 'held for investment' in p)):
             return 'loans_and_financing_receivables_net'
@@ -197,9 +207,9 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
             'frb' in p or 'regulatory stock' in p:
             return 'long_term_investments'
 
-        # Other financial assets
-        if 'real estate asset' in p:
-            return 'other_financial_assets'
+        # Real estate assets
+        if 'real estate' in p:
+            return 'real_estate_assets'
         if 'foreclos' in p or 'repossessed' in p:
             return 'other_financial_assets'
 
@@ -258,8 +268,8 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
                 return 'total_equity'
             return 'accumulated_other_comprehensive_income_loss'
 
-        # Treasury stock
-        if (('treasury' in p or 'purchase' in p) and ('stock' in p or 'share' in p)) or ('esop' in p or 'option' in p):
+        # Treasury stock (must be monetary, not share count)
+        if 'monetary' in dt and ((('treasury' in p or 'purchase' in p) and ('stock' in p or 'share' in p)) or ('esop' in p or 'option' in p)):
             return 'treasury_stock'
 
         # Noncontrolling interests
@@ -269,7 +279,7 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
             return 'minority_interest'
 
         # Total stockholders equity pattern
-        if ('stockholder' in p or 'shareholder' in p or 'owner' in p) and ('equity' in p or 'deficit' in p) and 'liabilit' not in p:
+        if (('stockholder' in p or 'shareholder' in p or 'owner' in p) and ('equity' in p or 'deficit' in p) and 'liabilit' not in p) or ('total net asset' in p) or ('total capitalization' in p) or ('total partners capital' in p):
             return 'total_stockholders_equity'
 
         # Total equity
@@ -300,7 +310,9 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
                 return 'deferred_revenue'
 
         # Debt - use pattern for current vs non-current
-        if ('borrowing' in p or 'borrowings' in p or 'debt' in p or 'notes' in p or 'loan' in p or 'loans' in p):
+        # Only match if line is before total_liabilities (to exclude equity section items like AOCI)
+        if ('borrowing' in p or 'borrowings' in p or 'debt' in p or 'notes' in p or 'loan' in p or 'loans' in p) \
+                and line_num < total_liabilities:
             if is_non_current_pattern(p) or 'long term' in p or 'long-term' in p:
                 return 'long_term_debt'
             elif is_current_pattern(p) or 'short term' in p or 'short-term' in p:
@@ -408,12 +420,21 @@ def map_bs_item_strategy2(plabel, line_num, control_lines, tag='', negating=0, d
         if 'intangible' in p and 'liabilit' in p:
             return 'other_financial_liabilities'
 
+        # Catch-all: check children for deposit patterns (for generic labels like "Total")
+        if is_sum and calc_children:
+            for child_entry in calc_children:
+                if isinstance(child_entry, (list, tuple)) and len(child_entry) >= 3:
+                    child_plabel = child_entry[2]
+                    cp = normalize(child_plabel)
+                    if 'deposit' in cp or 'savings' in cp or 'checking' in cp or 'money market' in cp or 'time account' in cp:
+                        return 'customer_and_policyholder_deposits'
+
         # Commitments and contingencies
         if 'commitments' in p or 'contingencies' in p:
             return 'commitments_and_contingencies'
 
         # Total liabilities pattern
-        if p in ['total liabilities', 'liabilities total'] or ('total' in p and 'liabilit' in p and 'current' not in p and 'stockholder' not in p and 'equity' not in p):
+        if p in ['total liabilities', 'liabilities total'] or ('total' in p and 'liabilit' in p and 'current' not in p and 'stockholder' not in p and 'equity' not in p and 'other' not in p):
             return 'total_liabilities'
 
     return None
@@ -436,6 +457,30 @@ def map_balance_sheet_strategy2(line_items, control_lines):
     # Build set of control line numbers for quick lookup
     control_line_nums = set(control_lines.values())
 
+    # Pre-scan: find all items that match total_stockholders_equity pattern
+    # Add them ALL to control_line_nums so their children aren't skipped
+    # (Later, deduplication will assign first to total_stockholders_equity, rest to total_equity)
+    for item in line_items:
+        p = normalize(item.get('plabel', ''))
+        line_num = item.get('stmt_order', 0)
+        if (('stockholder' in p or 'shareholder' in p) and ('equity' in p or 'deficit' in p) and 'liabilit' not in p) or ('total net asset' in p) or ('total capitalization' in p) or ('total partners capital' in p):
+            control_line_nums.add(line_num)
+
+    # Build lookup of line_num -> plabel for parent pattern detection
+    line_to_plabel = {item.get('line', 0): (item.get('plabel', '') or '').lower()
+                      for item in line_items}
+
+    def is_other_xxx_parent(parent_line_num):
+        """Check if parent is an 'Other XXX' pattern that should allow children to be mapped."""
+        if parent_line_num is None:
+            return False
+        parent_plabel = line_to_plabel.get(parent_line_num, '')
+        # Match patterns like "other assets", "total other assets", "other current assets", "other liabilities"
+        if 'other' in parent_plabel:
+            if 'asset' in parent_plabel or 'liabilit' in parent_plabel:
+                return True
+        return False
+
     for item in line_items:
         plabel = item.get('plabel', '')
         line_num = item.get('stmt_order', 0)
@@ -447,12 +492,32 @@ def map_balance_sheet_strategy2(line_items, control_lines):
 
         # Check if we should skip based on parent_line
         # Skip if parent is NOT a control item (i.e., this item is a grandchild or deeper)
+        # EXCEPTION 1: Don't skip if parent is an "Other XXX" pattern (hybrid approach)
+        # EXCEPTION 2: Don't skip equity section items (they're easier to map and parent may be unmappable)
         parent_line = item.get('parent_line')
         is_control_line = line_num in control_line_nums
+
+        # Determine equity section start line
+        # Use total_liabilities if available, otherwise use min(common_stock, preferred_stock)
+        total_liabilities_line = control_lines.get('total_liabilities')
+        if total_liabilities_line:
+            equity_start = total_liabilities_line
+        else:
+            # Fallback: use the first equity item (common_stock or preferred_stock)
+            common_stock_line = control_lines.get('common_stock', float('inf'))
+            preferred_stock_line = control_lines.get('preferred_stock', float('inf'))
+            equity_start = min(common_stock_line, preferred_stock_line)
+
+        is_equity_section = line_num >= equity_start
+
         # Skip if: not a control item itself AND has a parent AND parent is not a control item
+        # But DON'T skip equity section items
         if not is_control_line and parent_line is not None and parent_line not in control_line_nums:
-            # Skip this item - its parent is not a control item
-            continue
+            if not is_equity_section:
+                # Check if parent is "Other XXX" pattern - if so, don't skip children
+                if not is_other_xxx_parent(parent_line):
+                    # Skip this item - its parent is not a control item
+                    continue
 
         # Get value from most recent period
         value = None
@@ -471,6 +536,30 @@ def map_balance_sheet_strategy2(line_items, control_lines):
                 'section': 'strategy2'  # Mark as strategy 2
             })
             target_to_plabels[target].append((plabel, line_num))
+
+    # Special handling for total_stockholders_equity: if multiple items match,
+    # the one with smaller line number is total_stockholders_equity,
+    # the one(s) with greater line number(s) are total_equity
+    if 'total_stockholders_equity' in target_to_plabels:
+        items = target_to_plabels['total_stockholders_equity']
+        if len(items) >= 2:
+            # Sort by line number
+            items_sorted = sorted(items, key=lambda x: x[1])
+            # Keep first (smallest line_num) as total_stockholders_equity
+            target_to_plabels['total_stockholders_equity'] = [items_sorted[0]]
+            # Move rest to total_equity
+            if 'total_equity' not in target_to_plabels:
+                target_to_plabels['total_equity'] = []
+            target_to_plabels['total_equity'].extend(items_sorted[1:])
+            # Update mappings list
+            for mapping in mappings:
+                if mapping['target'] == 'total_stockholders_equity':
+                    plabel_match = mapping['plabel']
+                    # Find line_num for this plabel in items_sorted
+                    for plabel_item, line_item in items_sorted[1:]:
+                        if plabel_item == plabel_match:
+                            mapping['target'] = 'total_equity'
+                            break
 
     return mappings, target_to_plabels
 
@@ -501,12 +590,13 @@ def calculate_residuals_strategy2(standardized, control_lines):
         'deferred_tax_assets',
         # Financial company asset items
         'trading_and_derivative_assets_at_fair_value', 'investment_securities', 'loans_and_financing_receivables_net',
-        'insurance_assets', 'other_financial_assets'
+        'insurance_assets', 'real_estate_assets', 'other_financial_assets'
     ]
 
     # Liability items that are summed for other_liabilities calculation
     liability_items = [
-        'account_payables', 'accrued_payroll', 'accrued_expenses', 'short_term_debt', 'long_term_debt',
+        'account_payables', 'accrued_payroll', 'accrued_expenses', 'accrued_interest_payable',
+        'short_term_debt', 'long_term_debt',
         'deferred_revenue', 'deferred_revenue_non_current', 'tax_payables', 'tax_payables_non_current',
         'dividends_payable', 'finance_lease_obligations_current', 'finance_lease_obligations_non_current',
         'finance_lease_obligations', 'operating_lease_obligations_current', 'operating_lease_obligations_non_current',
@@ -649,6 +739,7 @@ def get_balance_sheet_structure_strategy2():
         {'type': 'item', 'field': 'intangible_assets', 'label': 'Intangible assets, net', 'indent': 1},
         {'type': 'item', 'field': 'goodwill_and_intangible_assets', 'label': 'Goodwill and intangible assets', 'indent': 1},
         {'type': 'item', 'field': 'deferred_tax_assets', 'label': 'Deferred tax assets', 'indent': 1},
+        {'type': 'item', 'field': 'real_estate_assets', 'label': 'Real estate assets', 'indent': 1},
         {'type': 'item', 'field': 'other_financial_assets', 'label': 'Other financial assets', 'indent': 1},
         {'type': 'item', 'field': 'other_assets', 'label': 'Other assets', 'indent': 1},
         {'type': 'subtotal', 'field': 'total_assets', 'label': 'TOTAL ASSETS'},

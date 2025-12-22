@@ -44,7 +44,7 @@ def normalize(text):
     """Normalize text for matching"""
     if not text:
         return ""
-    return text.lower().replace('-', ' ').replace(',', '').replace('  ', ' ').strip()
+    return text.lower().replace('-', ' ').replace(',', '').replace(':', '').replace("'", "").replace('  ', ' ').strip()
 
 
 # ============================================================================
@@ -75,7 +75,7 @@ def find_bs_control_items(line_items):
         # 1. total_current_assets (CSV line 10) - REQUIRED
         # Pattern: [contains 'total current assets'] or [contains 'current assets' not contains 'other']
         if 'total_current_assets' not in control_lines:
-            if ('total current assets' in p) or ('current assets' in p and 'other' not in p):
+            if 'total current assets' in p:
                 control_lines['total_current_assets'] = line_num
 
         # 2. total_non_current_assets (CSV line 20)
@@ -108,11 +108,31 @@ def find_bs_control_items(line_items):
             if p == 'total liabilities' or p == 'liabilities total':
                 control_lines['total_liabilities'] = line_num
 
-        # 6. total_stockholders_equity (CSV line 49) - REQUIRED
+        # 6a. common_stock - used as equity section boundary when total_liabilities is missing
+        # Must be after total_assets to avoid matching asset items
+        if 'common_stock' not in control_lines and 'total_assets' in control_lines:
+            if line_num > control_lines['total_assets']:
+                if ('common stock' in p or 'common shares' in p) and 'treasury' not in p:
+                    control_lines['common_stock'] = line_num
+
+        # 6b. preferred_stock - used as equity section boundary when total_liabilities is missing
+        # Must be after total_assets to avoid matching asset items
+        if 'preferred_stock' not in control_lines and 'total_assets' in control_lines:
+            if line_num > control_lines['total_assets']:
+                if ('preferred stock' in p or 'preferred shares' in p) and 'treasury' not in p:
+                    control_lines['preferred_stock'] = line_num
+
+        # 7. total_stockholders_equity (CSV line 49) - REQUIRED
         # Pattern: [contains 'total' and contains 'equity'] not [contains 'other' or contains 'liabilities' or contains 'total equity']
-        if 'total_stockholders_equity' not in control_lines:
-            if ('total' in p and 'equity' in p and 'other' not in p and 'liabilit' not in p and p != 'total equity') or ('total stockholders' in p and 'liabliti' not in p) or ('total shareholders' in p and 'liabliti' not in p):
-                control_lines['total_stockholders_equity'] = line_num
+        # Must be after total_assets (to avoid matching "Total Equity Securities" which is an asset)
+        if 'total_stockholders_equity' not in control_lines and 'total_assets' in control_lines:
+            if line_num > control_lines['total_assets']:
+                if (('total' in p and 'equity' in p and 'other' not in p and 'liabilit' not in p and p != 'total equity') 
+                    or
+                    ('total stockholders' in p and 'liabilit' not in p) 
+                    or ('total shareholders' in p and 'liabilit' not in p) 
+                    or ('total shareowners' in p and 'liabilit' not in p)) or ('total net asset' in p) or ('total capitalization' in p) or ('total partners capital' in p) or ('total members capital' in p):
+                    control_lines['total_stockholders_equity'] = line_num
 
         # 7. total_equity (CSV line 50)
         # Pattern: [equals to 'total equity' or equals to 'equity, total']
@@ -123,8 +143,267 @@ def find_bs_control_items(line_items):
         # 8. total_liabilities_and_total_equity (CSV line 53) - REQUIRED
         # Pattern: [contains 'liabilities' and contains 'equity']
         if 'total_liabilities_and_total_equity' not in control_lines:
-            if 'liabilit' in p and ('equity' in p or 'shareholder' in p or 'stockholder' in p):
+            if 'liabilit' in p and ('equity' in p or 'deficit' in p
+                                    or 'shareholder' in p or 'stockholder' in p or 'net asset' in p
+                                    or 'capitalization' in p or 'partners capital' in p or 'members capital' in p):
                 control_lines['total_liabilities_and_total_equity'] = line_num
+
+    # Fallback for generic "Total" lines as total_assets and total_L&E
+    # Some companies (e.g., ROK) use just "Total" for both
+    # Heuristic: find two "Total" lines with equal values - first is total_assets, second is total_L&E
+    if 'total_assets' not in control_lines or 'total_liabilities_and_total_equity' not in control_lines:
+        total_lines = []
+        for item in line_items:
+            p = normalize(item['plabel'])
+            if p == 'total':
+                total_lines.append(item)
+
+        # If we have at least 2 "Total" lines, find pairs with matching values
+        if len(total_lines) >= 2:
+            for i, item1 in enumerate(total_lines):
+                for item2 in total_lines[i+1:]:
+                    values1 = item1.get('values', {})
+                    values2 = item2.get('values', {})
+
+                    # Check if values match for any period
+                    for period, val1 in values1.items():
+                        val2 = values2.get(period)
+                        if val1 and val2 and abs(val1 - val2) < 1:
+                            # Found matching pair - first is total_assets, second is total_L&E
+                            line1 = item1.get('stmt_order', 0)
+                            line2 = item2.get('stmt_order', 0)
+                            if 'total_assets' not in control_lines:
+                                control_lines['total_assets'] = min(line1, line2)
+                            if 'total_liabilities_and_total_equity' not in control_lines:
+                                control_lines['total_liabilities_and_total_equity'] = max(line1, line2)
+                            break
+                    if 'total_assets' in control_lines and 'total_liabilities_and_total_equity' in control_lines:
+                        break
+                if 'total_assets' in control_lines and 'total_liabilities_and_total_equity' in control_lines:
+                    break
+
+    # Fallback for total_stockholders_equity after total_assets is found by heuristic
+    # Re-scan for patterns that require total_assets to be present first
+    if 'total_stockholders_equity' not in control_lines and 'total_assets' in control_lines:
+        total_assets_line = control_lines['total_assets']
+        for item in line_items:
+            line_num = item.get('stmt_order', 0)
+            if line_num <= total_assets_line:
+                continue
+            p = normalize(item['plabel'])
+            if (('total' in p and 'equity' in p and 'other' not in p and 'liabilit' not in p and p != 'total equity') or
+                ('total stockholders' in p and 'liabilit' not in p) or ('total shareholders' in p and 'liabilit' not in p) or ('total shareowners' in p and 'liabilit' not in p) or
+                ('total net asset' in p) or ('total capitalization' in p) or ('total partners capital' in p)):
+                control_lines['total_stockholders_equity'] = line_num
+                break
+
+    # Fallback for common_stock and preferred_stock after total_assets is found by heuristic
+    # These are used as equity section boundary when total_liabilities is missing
+    if 'total_assets' in control_lines:
+        total_assets_line = control_lines['total_assets']
+        for item in line_items:
+            line_num = item.get('stmt_order', 0)
+            if line_num <= total_assets_line:
+                continue
+            p = normalize(item['plabel'])
+            if 'common_stock' not in control_lines:
+                if ('common stock' in p or 'common shares' in p) and 'treasury' not in p:
+                    control_lines['common_stock'] = line_num
+            if 'preferred_stock' not in control_lines:
+                if ('preferred stock' in p or 'preferred shares' in p) and 'treasury' not in p:
+                    control_lines['preferred_stock'] = line_num
+
+    # Fallback for generic "Total" as total_liabilities_and_total_equity
+    # Some companies (e.g., MEC) use just "Total" as the balancing line
+    # We check: (1) it's after total_assets, (2) its value equals total_assets value
+    if 'total_liabilities_and_total_equity' not in control_lines and 'total_assets' in control_lines:
+        total_assets_line = control_lines['total_assets']
+
+        # Find total_assets item and its values
+        total_assets_values = None
+        for item in line_items:
+            if item.get('stmt_order', 0) == total_assets_line:
+                total_assets_values = item.get('values', {})
+                break
+
+        if total_assets_values:
+            # Look for generic "Total" line after total_assets with matching value
+            for item in line_items:
+                line_num = item.get('stmt_order', 0)
+                if line_num <= total_assets_line:
+                    continue
+
+                p = normalize(item['plabel'])
+                # Match generic "Total" but not more specific patterns
+                if p == 'total':
+                    item_values = item.get('values', {})
+                    # Compare values - if any period matches, it's likely the balancing line
+                    for period, ta_value in total_assets_values.items():
+                        item_value = item_values.get(period)
+                        if ta_value and item_value:
+                            # Use tolerance of 1 for float comparison
+                            if abs(ta_value - item_value) < 1:
+                                control_lines['total_liabilities_and_total_equity'] = line_num
+                                break
+                    if 'total_liabilities_and_total_equity' in control_lines:
+                        break
+
+    # Fallback for "total deficit" as total_stockholders_equity
+    # Only use if: (1) neither total_stockholders_equity nor total_equity found,
+    # (2) we have total_L&E and total_liabilities,
+    # (3) value of "total deficit" equals (total_L&E - total_liabilities) within tolerance
+    if 'total_stockholders_equity' not in control_lines and 'total_equity' not in control_lines:
+        total_le_line = control_lines.get('total_liabilities_and_total_equity')
+        total_l_line = control_lines.get('total_liabilities')
+
+        if total_le_line and total_l_line:
+            # Find values for total_L&E and total_liabilities
+            total_le_values = None
+            total_l_values = None
+            for item in line_items:
+                line_num = item.get('stmt_order', 0)
+                if line_num == total_le_line:
+                    total_le_values = item.get('values', {})
+                elif line_num == total_l_line:
+                    total_l_values = item.get('values', {})
+
+            if total_le_values and total_l_values:
+                # Look for "total deficit" and verify value = total_L&E - total_liabilities
+                for item in line_items:
+                    p = normalize(item['plabel'])
+                    if p == 'total deficit':
+                        item_values = item.get('values', {})
+                        line_num = item.get('stmt_order', 0)
+
+                        # Check if value matches expected equity (total_L&E - total_liabilities)
+                        for period in total_le_values:
+                            le_val = total_le_values.get(period)
+                            l_val = total_l_values.get(period)
+                            item_val = item_values.get(period)
+
+                            if le_val and l_val and item_val:
+                                expected_equity = le_val - l_val
+                                if abs(item_val - expected_equity) < 1:
+                                    control_lines['total_stockholders_equity'] = line_num
+                                    break
+
+                        if 'total_stockholders_equity' in control_lines:
+                            break
+
+    # Heuristic fallback for total_assets with footnote references like "TOTAL ASSETS (1)"
+    # If total_assets not found but total_liabilities_and_total_equity IS found,
+    # find item containing "total assets" whose value equals total_liabilities_and_total_equity
+    if 'total_assets' not in control_lines and 'total_liabilities_and_total_equity' in control_lines:
+        total_le_line = control_lines['total_liabilities_and_total_equity']
+
+        # Find total_liabilities_and_total_equity values
+        total_le_values = None
+        for item in line_items:
+            if item.get('stmt_order', 0) == total_le_line:
+                total_le_values = item.get('values', {})
+                break
+
+        if total_le_values:
+            # Look for item containing "total assets" with matching value
+            for item in line_items:
+                p = normalize(item['plabel'])
+                line_num = item.get('stmt_order', 0)
+
+                # Must be before total_liabilities_and_total_equity
+                if line_num >= total_le_line:
+                    continue
+
+                # Check if label contains "total assets" (handles "TOTAL ASSETS (1)" etc.) or equals "assets"
+                if 'total assets' in p or 'total asset' in p or p == 'assets':
+                    item_values = item.get('values', {})
+                    # Compare values - if any period matches, it's total_assets
+                    for period, le_value in total_le_values.items():
+                        item_value = item_values.get(period)
+                        if le_value and item_value and abs(le_value - item_value) < 1:
+                            control_lines['total_assets'] = line_num
+                            break
+                    if 'total_assets' in control_lines:
+                        break
+
+        # After finding total_assets via heuristic, scan for dependent control items
+        if 'total_assets' in control_lines:
+            total_assets_line = control_lines['total_assets']
+            for item in line_items:
+                line_num = item.get('stmt_order', 0)
+                if line_num <= total_assets_line:
+                    continue
+                p = normalize(item['plabel'])
+
+                # common_stock
+                if 'common_stock' not in control_lines:
+                    if ('common stock' in p or 'common shares' in p) and 'treasury' not in p:
+                        control_lines['common_stock'] = line_num
+
+                # preferred_stock
+                if 'preferred_stock' not in control_lines:
+                    if ('preferred stock' in p or 'preferred shares' in p) and 'treasury' not in p:
+                        control_lines['preferred_stock'] = line_num
+
+                # total_stockholders_equity
+                if 'total_stockholders_equity' not in control_lines:
+                    if (('total' in p and 'equity' in p and 'other' not in p and 'liabilit' not in p and p != 'total equity') or
+                        ('total stockholders' in p and 'liabilit' not in p) or
+                        ('total shareholders' in p and 'liabilit' not in p) or
+                        ('total shareowners' in p and 'liabilit' not in p) or
+                        ('total net asset' in p) or ('total capitalization' in p) or ('total partners capital' in p)):
+                        control_lines['total_stockholders_equity'] = line_num
+
+    # Heuristic for funds: "Net assets" as total_stockholders_equity
+    # Funds often have: Total Assets, Total Liabilities, Net Assets (no total_liabilities_and_total_equity)
+    # Validate using: total_assets = total_liabilities + net_assets
+    if 'total_stockholders_equity' not in control_lines:
+        if 'total_assets' in control_lines and 'total_liabilities' in control_lines:
+            total_assets_line = control_lines['total_assets']
+            total_liabilities_line = control_lines['total_liabilities']
+
+            # Find values for total_assets and total_liabilities
+            total_assets_values = None
+            total_liabilities_values = None
+            for item in line_items:
+                line_num = item.get('stmt_order', 0)
+                if line_num == total_assets_line:
+                    total_assets_values = item.get('values', {})
+                elif line_num == total_liabilities_line:
+                    total_liabilities_values = item.get('values', {})
+
+            if total_assets_values and total_liabilities_values:
+                # Look for exact "net assets" match (conservative)
+                for item in line_items:
+                    p = normalize(item['plabel'])
+                    line_num = item.get('stmt_order', 0)
+
+                    # Must be after total_liabilities
+                    if line_num <= total_liabilities_line:
+                        continue
+
+                    # Exact match only
+                    if p == 'net assets' or p == 'total net assets':
+                        item_values = item.get('values', {})
+
+                        # Validate: total_assets = total_liabilities + net_assets
+                        for period in total_assets_values:
+                            ta_val = total_assets_values.get(period)
+                            tl_val = total_liabilities_values.get(period)
+                            na_val = item_values.get(period)
+
+                            if ta_val and tl_val is not None and na_val:
+                                expected_net_assets = ta_val - tl_val
+                                if abs(na_val - expected_net_assets) < 1:
+                                    # Accounting identity holds - this is total_stockholders_equity
+                                    control_lines['total_stockholders_equity'] = line_num
+                                    # Set total_liabilities_and_total_equity to virtual line (max + 1)
+                                    if 'total_liabilities_and_total_equity' not in control_lines:
+                                        max_line = max(item.get('stmt_order', 0) for item in line_items)
+                                        control_lines['total_liabilities_and_total_equity'] = max_line + 1
+                                    break
+
+                        if 'total_stockholders_equity' in control_lines:
+                            break
 
     return control_lines
 
@@ -202,10 +481,12 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
         if 'cash' in p and 'restricted' in p:
             return 'cash_cash_equivalent_and_restricted_cash'
         # CSV line 4: cash and short-term investments (combined - check FIRST before separates)
-        if 'cash and short term' in p or 'cash cash equivalents and short term investments' in p or 'cash cash equivalents and marketable securities' in p:
+        if ('cash and short term' in p or 'cash cash equivalents and short term investments' in p 
+            or 'cash cash equivalents and marketable securities' in p) and 'collateral' not in p:
             return 'cash_and_short_term_investments'
         # CSV line 2: [contains 'cash'] not [contains 'restricted'] not [contains 'cash and short-term investments']
-        if ('cash' in p and 'restricted cash' != p) and ('total cash cash equivalents and marketable securities' != p) and ('total cash cash equivalents and short term investments' != p) :
+        if (('cash' in p and 'restricted cash' != p) and ('total cash cash equivalents and marketable securities' != p) 
+            and ('total cash cash equivalents and short term investments' != p)) and ('collateral' not in p):
             return 'cash_and_cash_equivalents'
         # CSV line 3: [short-term AND investments] OR [marketable AND securities] OR [marketable AND investments]
         if (( 'investment' in p) or \
@@ -219,6 +500,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                                                                                              and ('other' not in p and 'tax' not in p and 'financ' not in p and 'loan' not in p  
                                                                                                   and 'interest' not in p and 'accrued' not in p )):
             return 'account_receivables_net'
+        if p == 'receivables':
+            return 'account_receivables_net'
+        
         # CSV line 6: other receivables
         if 'other receivable' in p or 'other account receivable' in p or 'other accounts receivable' in p:
             return 'other_receivables'
@@ -241,16 +525,21 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             return 'cash_and_cash_equivalents'
 
         # Trading and derivative assets (typically current)
-        if ('trading' in p or 'equity securit' in p) and ('fair value' in p) and ('income investment' not in p and 'loan' not in p):
+        if ('trading' in p or 'equity securit' in p) and ('fair value' in p) and ('income investment' not in p and 'loan' not in p and 'held to maturity' not in p and 'available for sale' not in p) :
             return 'trading_and_derivative_assets_at_fair_value'
         if 'derivative' in p and ('asset' in p or 'assets' in p):
             return 'trading_and_derivative_assets_at_fair_value'
+
+        # Loans and financing receivables (current)
+        if ('accrued' in p or 'receivable' in p or 'recoverable' in p) and ('interest' in p or 'dividend' in p
+                                                                            or 'mortgage' in p or 'premium' in p or 'financ' in p):
+            return 'loans_and_financing_receivables_current'
 
         # REMOVED: other_current_assets pattern (now calculated as residual)
 
     # NON-CURRENT ASSETS
     elif line_num <= total_assets:
-        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p or 'fixed assets' in p or 'premise' in p) and ('net' in p or 'less' in p)) and ('gross' not in tag and 'gross' not in p and 'cost' not in p and 'cost' not in p):
+        if (('property' in p or 'plant' in p or 'equipment' in p or 'ppe' in p or 'fixed assets' in p or 'premise' in p)) and ('gross' not in tag and 'gross' not in p and 'cost' not in p and 'cost' not in p):
             return 'property_plant_equipment_net'
         if ('investment' in p or 'marketable securities' in p) and line_num > total_current_assets:
             return 'long_term_investments'
@@ -306,9 +595,9 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             'frb' in p or 'regulatory stock' in p:
             return 'long_term_investments'
 
-        # Other financial assets
-        if 'real estate asset' in p:
-            return 'other_financial_assets'
+        # Real estate assets
+        if 'real estate' in p:
+            return 'real_estate_assets'
         if 'foreclos' in p or 'repossessed' in p:
             return 'other_financial_assets'
 
@@ -346,6 +635,8 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
             (('commonstock' in t or 'commonshare' in t) and ('additional' not in p and 'paid in' not in p and 'excess' not in p and 'surplus' not in p and 'treasury' not in p and 'purchase' not in p))) or 
             ('common stock' == p) or ('common stocks' == p)or ('common shares' == p) or ('common share' == p) or 'capital stock' == p):
             return 'common_stock'
+        if 'monetary' in dt and ('common stock' in p  or 'common share' in p or 'capital stock' in p) and 'net of repurchase' in p:
+            return 'common_stock'
         # Preferred stock - match any label containing "preferred stock"
         if 'preferred stock' in p or 'preferred stocks' in p:
             return 'preferred_stock'
@@ -364,14 +655,14 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
                 return 'total_equity'
             return 'accumulated_other_comprehensive_income_loss'
         # CSV line 42: [(treasury stock OR treasury stocks) AND (cost OR par)]
-        if (('treasury' in p or 'purchase' in p) and('stock' in p or 'share' in p)) or ('esop' in p or 'option' in p ) :
+        if 'monetary' in dt and ((('treasury' in p or 'purchase' in p) and('stock' in p or 'share' in p)) or ('esop' in p or 'option' in p )) :
             return 'treasury_stock'
         # CSV: [contains 'noncontrolling interests in subsidiaries']
         if 'noncontrolling interests in subsidiaries' in p:
             return 'redeemable_non_controlling_interests'
         if 'noncontrolling' in p or 'non controlling' in p or 'minority interest' in p:
             return 'minority_interest'
-        if  ('stockholder' in p or 'shareholder' in p or 'owner' in p) and ('equity' in p or 'deficit' in p) and 'liabilit' not in p:
+        if (('stockholder' in p or 'shareholder' in p or 'owner' in p) and ('equity' in p or 'deficit' in p) and 'liabilit' not in p) or ('total net asset' in p) or ('total capitalization' in p) or ('total partners capital' in p):
             return 'total_stockholders_equity'
         # REMOVED: other_total_stockholders_equity pattern (now calculated as residual)
         # CSV: [equals to 'total equity' or equals to 'equity, total']
@@ -506,7 +797,7 @@ def map_bs_item(plabel, line_num, control_lines, tag='', negating=0, datatype=''
 
             if 'commitments' in p or 'contingencies' in p:
                 return 'commitments_and_contingencies'
-            if p in ['total liabilities', 'liabilities total'] or ('total' in p and 'liabilit' in p and 'current' not in p and 'stockholder' not in p and 'equity' not in p):
+            if p in ['total liabilities', 'liabilities total'] or ('total' in p and 'liabilit' in p and 'current' not in p and 'stockholder' not in p and 'equity' not in p and 'other' not in p):
                 return 'total_liabilities'
             # REMOVED: other_non_current_liabilities pattern (now calculated as residual)
 
@@ -1194,6 +1485,21 @@ def map_statement(stmt_type, line_items, control_lines):
     # Build set of control line numbers for quick lookup
     control_line_nums = set(control_lines.values())
 
+    # Build lookup of line_num -> plabel for parent pattern detection (BS only)
+    line_to_plabel = {item.get('line', 0): (item.get('plabel', '') or '').lower()
+                      for item in line_items}
+
+    def is_other_xxx_parent(parent_line_num):
+        """Check if parent is an 'Other XXX' pattern that should allow children to be mapped."""
+        if parent_line_num is None:
+            return False
+        parent_plabel = line_to_plabel.get(parent_line_num, '')
+        # Match patterns like "other assets", "total other assets", "other current assets", "other liabilities"
+        if 'other' in parent_plabel:
+            if 'asset' in parent_plabel or 'liabilit' in parent_plabel:
+                return True
+        return False
+
     for item in line_items:
         plabel = item['plabel']
         line_num = item.get('stmt_order', 0)
@@ -1201,13 +1507,33 @@ def map_statement(stmt_type, line_items, control_lines):
 
         # For BS items, check if we should skip based on parent_line
         # Skip if parent is NOT a control item (i.e., this item is a grandchild or deeper)
+        # EXCEPTION 1: Don't skip if parent is an "Other XXX" pattern (hybrid approach)
+        # EXCEPTION 2: Don't skip equity section items (they're easier to map and parent may be unmappable)
         if stmt_type == 'BS':
             parent_line = item.get('parent_line')
             is_control_line = line_num in control_line_nums
+
+            # Determine equity section start line
+            # Use total_liabilities if available, otherwise use min(common_stock, preferred_stock)
+            total_liabilities_line = control_lines.get('total_liabilities')
+            if total_liabilities_line:
+                equity_start = total_liabilities_line
+            else:
+                # Fallback: use the first equity item (common_stock or preferred_stock)
+                common_stock_line = control_lines.get('common_stock', float('inf'))
+                preferred_stock_line = control_lines.get('preferred_stock', float('inf'))
+                equity_start = min(common_stock_line, preferred_stock_line)
+
+            is_equity_section = line_num >= equity_start
+
             # Skip if: not a control item itself AND has a parent AND parent is not a control item
+            # But DON'T skip equity section items
             if not is_control_line and parent_line is not None and parent_line not in control_line_nums:
-                # Skip this item - its parent is not a control item
-                continue
+                if not is_equity_section:
+                    # Check if parent is "Other XXX" pattern - if so, don't skip children
+                    if not is_other_xxx_parent(parent_line):
+                        # Skip this item - its parent is not a control item
+                        continue
 
         # Get value for first period
         values = item.get('values', {})
@@ -1529,19 +1855,19 @@ def validate_and_calculate_bs_residuals(standardized, control_lines, sic_code=No
             'cash_and_cash_equivalents', 'cash_and_short_term_investments', 'cash_cash_equivalent_and_restricted_cash',
             'short_term_investments', 'account_receivables_net', 'other_receivables', 'inventory', 'prepaids',
             # Financial company current asset items
-            'trading_and_derivative_assets_at_fair_value'
+            'trading_and_derivative_assets_at_fair_value', 'loans_and_financing_receivables_current'
         ]),
         'other_non_current_assets': ('total_non_current_assets', [
             'property_plant_equipment_net', 'finance_lease_right_of_use_assets',
             'operating_lease_right_of_use_assets', 'lease_assets', 'long_term_investments', 'goodwill',
             'intangible_assets', 'goodwill_and_intangible_assets', 'deferred_tax_assets',
             # Financial company non-current asset items
-            'investment_securities', 'loans_and_financing_receivables_net', 'insurance_assets', 'other_financial_assets'
+            'investment_securities', 'loans_and_financing_receivables_net', 'insurance_assets', 'real_estate_assets', 'other_financial_assets'
         ]),
         'other_current_liabilities': ('total_current_liabilities', [
-            'account_payables', 'accrued_payroll', 'accrued_expenses', 'short_term_debt',
-            'deferred_revenue', 'tax_payables', 'dividends_payable', 'finance_lease_obligations_current',
-            'operating_lease_obligations_current', 'lease_obligation_current',
+            'account_payables', 'accrued_payroll', 'accrued_expenses', 'accrued_interest_payable',
+            'short_term_debt', 'deferred_revenue', 'tax_payables', 'dividends_payable',
+            'finance_lease_obligations_current', 'operating_lease_obligations_current', 'lease_obligation_current',
             # Financial company current liability items
             'customer_and_policyholder_deposits', 'trading_and_derivative_liabilities_at_fair_value',
             'loss_and_claims_reserves_and_payables'
@@ -1614,6 +1940,7 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'short_term_investments', 'label': 'Short-term investments', 'indent': 1},
         # Financial company current asset items
         {'type': 'item', 'field': 'trading_and_derivative_assets_at_fair_value', 'label': 'Trading assets and derivative instruments', 'indent': 1},
+        {'type': 'item', 'field': 'loans_and_financing_receivables_current', 'label': 'Loans and financing receivables, current', 'indent': 1},
         {'type': 'item', 'field': 'account_receivables_net', 'label': 'Accounts receivable, net', 'indent': 1},
         {'type': 'item', 'field': 'other_receivables', 'label': 'Other receivables', 'indent': 1},
         {'type': 'item', 'field': 'inventory', 'label': 'Inventory', 'indent': 1},
@@ -1634,6 +1961,7 @@ def get_balance_sheet_structure():
         {'type': 'item', 'field': 'intangible_assets', 'label': 'Intangible assets, net', 'indent': 1},
         {'type': 'item', 'field': 'goodwill_and_intangible_assets', 'label': 'Goodwill and intangible assets', 'indent': 1},
         {'type': 'item', 'field': 'deferred_tax_assets', 'label': 'Deferred tax assets', 'indent': 1},
+        {'type': 'item', 'field': 'real_estate_assets', 'label': 'Real estate assets', 'indent': 1},
         {'type': 'item', 'field': 'other_financial_assets', 'label': 'Other financial assets', 'indent': 1},
         {'type': 'item', 'field': 'other_non_current_assets', 'label': 'Other non-current assets', 'indent': 1},
         {'type': 'subtotal', 'field': 'total_non_current_assets', 'label': 'Total Non-Current Assets'},
@@ -2128,31 +2456,39 @@ def create_excel_workbook(results, company_name, ticker):
     return wb
 
 
-def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
-    """Main function to map all three financial statements"""
-    print(f"\n{'='*80}")
-    print(f"MAPPING FINANCIAL STATEMENTS")
-    print(f"{'='*80}")
-    print(f"\nCompany: {company_name} (Ticker: {ticker}, CIK: {cik})")
-    print(f"Filing: {adsh}")
-    print(f"Dataset: {year}Q{quarter}")
+def map_financial_statements(cik, adsh, year, quarter, company_name, ticker, verbose=False):
+    """Main function to map all three financial statements
 
-    reconstructor = StatementReconstructor(year=year, quarter=quarter)
+    Args:
+        verbose: If True, print progress messages. Default False for batch processing.
+    """
+    def _log(msg):
+        if verbose:
+            print(msg)
+
+    _log(f"\n{'='*80}")
+    _log(f"MAPPING FINANCIAL STATEMENTS")
+    _log(f"{'='*80}")
+    _log(f"\nCompany: {company_name} (Ticker: {ticker}, CIK: {cik})")
+    _log(f"Filing: {adsh}")
+    _log(f"Dataset: {year}Q{quarter}")
+
+    reconstructor = StatementReconstructor(year=year, quarter=quarter, verbose=verbose)
 
     results = {}
 
     # Map Balance Sheet
-    print(f"\n📋 Reconstructing Balance Sheet...")
+    _log(f"\n📋 Reconstructing Balance Sheet...")
     bs_result = reconstructor.reconstruct_statement_multi_period(cik=cik, adsh=adsh, stmt_type='BS')
     if bs_result and bs_result.get('line_items'):
-        print(f"   ✅ {len(bs_result['line_items'])} items, {len(bs_result.get('periods', []))} periods")
+        _log(f"   ✅ {len(bs_result['line_items'])} items, {len(bs_result.get('periods', []))} periods")
         control_lines = find_bs_control_items(bs_result['line_items'])
 
         # Check if Strategy 2 should be used (unclassified balance sheet)
         use_strategy2 = should_use_strategy2(control_lines)
 
         if use_strategy2:
-            print(f"   📌 Using Strategy 2 (unclassified balance sheet - missing total_current_assets or total_current_liabilities)")
+            _log(f"   📌 Using Strategy 2 (unclassified balance sheet - missing total_current_assets or total_current_liabilities)")
             mappings, target_to_plabels = map_balance_sheet_strategy2(bs_result['line_items'], control_lines)
             standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'], control_lines)
 
@@ -2160,22 +2496,22 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
             standardized = calculate_residuals_strategy2(standardized_base, control_lines)
             status = "Strategy 2 - unclassified balance sheet"
         else:
-            print(f"   📌 Using Strategy 1 (classified balance sheet)")
+            _log(f"   📌 Using Strategy 1 (classified balance sheet)")
             mappings, target_to_plabels = map_statement('BS', bs_result['line_items'], control_lines)
             standardized_base = aggregate_by_target(target_to_plabels, bs_result['line_items'], control_lines)
 
             # Validate and calculate residual other_* items
             standardized, status = validate_and_calculate_bs_residuals(standardized_base, control_lines, sic_code=None)
             if standardized is None:
-                print(f"   ⚠️  Validation failed: {status} - exporting anyway for debugging")
+                _log(f"   ⚠️  Validation failed: {status} - exporting anyway for debugging")
                 standardized = standardized_base  # Use pre-validation data
             else:
-                print(f"   ✅ Validation: {status}")
+                _log(f"   ✅ Validation: {status}")
 
         # Always export balance sheet, even if validation failed
         coverage = len(mappings) / len(bs_result['line_items']) * 100 if bs_result['line_items'] else 0
-        print(f"   📊 Mapped: {len(mappings)}/{len(bs_result['line_items'])} ({coverage:.1f}%)")
-        print(f"   🎯 Unique targets: {len(standardized)}")
+        _log(f"   📊 Mapped: {len(mappings)}/{len(bs_result['line_items'])} ({coverage:.1f}%)")
+        _log(f"   🎯 Unique targets: {len(standardized)}")
 
         results['balance_sheet'] = {
             'line_items': bs_result['line_items'],
@@ -2189,17 +2525,17 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
         }
 
     # Map Income Statement
-    print(f"\n📋 Reconstructing Income Statement...")
+    _log(f"\n📋 Reconstructing Income Statement...")
     is_result = reconstructor.reconstruct_statement_multi_period(cik=cik, adsh=adsh, stmt_type='IS')
     if is_result and is_result.get('line_items'):
-        print(f"   ✅ {len(is_result['line_items'])} items, {len(is_result.get('periods', []))} periods")
+        _log(f"   ✅ {len(is_result['line_items'])} items, {len(is_result.get('periods', []))} periods")
         control_lines = find_is_control_items(is_result['line_items'])
         mappings, target_to_plabels = map_statement('IS', is_result['line_items'], control_lines)
         standardized = aggregate_by_target(target_to_plabels, is_result['line_items'])
 
         coverage = len(mappings) / len(is_result['line_items']) * 100 if is_result['line_items'] else 0
-        print(f"   📊 Mapped: {len(mappings)}/{len(is_result['line_items'])} ({coverage:.1f}%)")
-        print(f"   🎯 Unique targets: {len(standardized)}")
+        _log(f"   📊 Mapped: {len(mappings)}/{len(is_result['line_items'])} ({coverage:.1f}%)")
+        _log(f"   🎯 Unique targets: {len(standardized)}")
 
         results['income_statement'] = {
             'line_items': is_result['line_items'],
@@ -2211,17 +2547,17 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
         }
 
     # Map Cash Flow
-    print(f"\n📋 Reconstructing Cash Flow...")
+    _log(f"\n📋 Reconstructing Cash Flow...")
     cf_result = reconstructor.reconstruct_statement_multi_period(cik=cik, adsh=adsh, stmt_type='CF')
     if cf_result and cf_result.get('line_items'):
-        print(f"   ✅ {len(cf_result['line_items'])} items, {len(cf_result.get('periods', []))} periods")
+        _log(f"   ✅ {len(cf_result['line_items'])} items, {len(cf_result.get('periods', []))} periods")
         control_lines = find_cf_control_items(cf_result['line_items'])
         mappings, target_to_plabels = map_statement('CF', cf_result['line_items'], control_lines)
         standardized = aggregate_by_target(target_to_plabels, cf_result['line_items'])
 
         coverage = len(mappings) / len(cf_result['line_items']) * 100 if cf_result['line_items'] else 0
-        print(f"   📊 Mapped: {len(mappings)}/{len(cf_result['line_items'])} ({coverage:.1f}%)")
-        print(f"   🎯 Unique targets: {len(standardized)}")
+        _log(f"   📊 Mapped: {len(mappings)}/{len(cf_result['line_items'])} ({coverage:.1f}%)")
+        _log(f"   🎯 Unique targets: {len(standardized)}")
 
         results['cash_flow'] = {
             'line_items': cf_result['line_items'],
@@ -2233,13 +2569,13 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
         }
 
     # Reconstruct other available statements (EQ, CI, etc.)
-    print(f"\n📋 Reconstructing other available statements...")
+    _log(f"\n📋 Reconstructing other available statements...")
     for stmt_type in ['EQ', 'CI']:
         try:
             stmt_result = reconstructor.reconstruct_statement_multi_period(cik=cik, adsh=adsh, stmt_type=stmt_type)
             if stmt_result and stmt_result.get('line_items'):
                 stmt_name = 'Equity Statement' if stmt_type == 'EQ' else 'Comprehensive Income'
-                print(f"   ✅ {stmt_name}: {len(stmt_result['line_items'])} items, {len(stmt_result.get('periods', []))} periods")
+                _log(f"   ✅ {stmt_name}: {len(stmt_result['line_items'])} items, {len(stmt_result.get('periods', []))} periods")
 
                 # Store reconstructed data (no mapping for now, just include as-is)
                 results[stmt_type.lower()] = {
@@ -2248,10 +2584,10 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
                     'metadata': stmt_result.get('metadata', {})
                 }
         except Exception as e:
-            print(f"   ⚠️  {stmt_type} statement not available or error: {e}")
+            _log(f"   ⚠️  {stmt_type} statement not available or error: {e}")
 
     # Export to Excel
-    print(f"\n📊 Creating Excel workbook...")
+    _log(f"\n📊 Creating Excel workbook...")
     wb = create_excel_workbook(
         results,
         company_name,
@@ -2263,7 +2599,7 @@ def map_financial_statements(cik, adsh, year, quarter, company_name, ticker):
     output_file = output_dir / f"{ticker}_{cik}_financial_statements.xlsx"
 
     wb.save(output_file)
-    print(f"   ✅ Excel saved to: {output_file}")
+    _log(f"   ✅ Excel saved to: {output_file}")
 
     return results
 
