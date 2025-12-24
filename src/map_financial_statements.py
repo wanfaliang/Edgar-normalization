@@ -396,10 +396,21 @@ def find_bs_control_items(line_items):
                                 if abs(na_val - expected_net_assets) < 1:
                                     # Accounting identity holds - this is total_stockholders_equity
                                     control_lines['total_stockholders_equity'] = line_num
-                                    # Set total_liabilities_and_total_equity to virtual line (max + 1)
+                                    # Create virtual total_liabilities_and_total_equity line item
                                     if 'total_liabilities_and_total_equity' not in control_lines:
-                                        max_line = max(item.get('stmt_order', 0) for item in line_items)
-                                        control_lines['total_liabilities_and_total_equity'] = max_line + 1
+                                        max_line = max(i.get('stmt_order', 0) for i in line_items)
+                                        virtual_line_num = max_line + 1
+                                        control_lines['total_liabilities_and_total_equity'] = virtual_line_num
+                                        # Create virtual line item with total_assets values
+                                        virtual_item = {
+                                            'stmt_order': virtual_line_num,
+                                            'plabel': 'Total liabilities and net assets',
+                                            'tag': 'LiabilitiesAndStockholdersEquity',
+                                            'values': total_assets_values.copy(),
+                                            'is_sum': True,
+                                            'is_virtual': True
+                                        }
+                                        line_items.append(virtual_item)
                                     break
 
                         if 'total_stockholders_equity' in control_lines:
