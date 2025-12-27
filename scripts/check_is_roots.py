@@ -1,5 +1,14 @@
-"""Check IS structure for multiple companies - output to file"""
+"""Check IS structure for multiple companies - output to file
+
+Usage:
+    python scripts/check_is_roots.py                     # All 75 companies
+    python scripts/check_is_roots.py --group general     # 50 general companies
+    python scripts/check_is_roots.py --group financial   # 25 financial companies
+    python scripts/check_is_roots.py --ticker AAPL MSFT  # Specific tickers
+    python scripts/check_is_roots.py --year 2024 --quarter 3  # Different period
+"""
 import sys
+import argparse
 from pathlib import Path
 from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
@@ -26,35 +35,74 @@ FINANCIAL_COMPANIES = [
     1020569, 1021917, 102212, 1022837, 1025378, 1025835, 1025996, 1026214, 1029199
 ]
 
-ALL_COMPANIES = GENERAL_COMPANIES + FINANCIAL_COMPANIES
+# Parse arguments
+parser = argparse.ArgumentParser(description='Check IS structure for companies')
+parser.add_argument('--ticker', nargs='+', help='Specific tickers (e.g., AAPL MSFT)')
+parser.add_argument('--group', choices=['general', 'financial', 'all'], default='all',
+                    help='Predefined company group')
+parser.add_argument('--year', type=int, default=2024, help='Fiscal year (default: 2024)')
+parser.add_argument('--quarter', type=int, default=2, help='Quarter 1-4 (default: 2)')
+args = parser.parse_args()
 
 # Get adsh for each company
 conn = psycopg2.connect(config.get_db_connection())
 cursor = conn.cursor()
 
 companies = []
-for cik in ALL_COMPANIES:
-    cursor.execute('''
-        SELECT f.adsh, f.company_name
-        FROM filings f
-        WHERE f.cik = %s
-          AND EXISTS (
-              SELECT 1 FROM edgar_pre ep
-              WHERE ep.adsh = f.adsh
-                AND ep.source_year = 2024
-                AND ep.source_quarter = 2
-                AND ep.stmt = 'IS'
-          )
-        LIMIT 1
-    ''', (str(cik),))
-    row = cursor.fetchone()
-    if row:
-        companies.append((row[0], cik, row[1]))
+
+if args.ticker:
+    # Lookup by ticker
+    for ticker in args.ticker:
+        cursor.execute('''
+            SELECT c.cik, f.adsh, f.company_name
+            FROM companies c
+            JOIN filings f ON c.cik = f.cik
+            WHERE c.ticker = %s
+              AND EXISTS (
+                  SELECT 1 FROM edgar_pre ep
+                  WHERE ep.adsh = f.adsh
+                    AND ep.source_year = %s
+                    AND ep.source_quarter = %s
+                    AND ep.stmt = 'IS'
+              )
+            LIMIT 1
+        ''', (ticker.upper(), args.year, args.quarter))
+        row = cursor.fetchone()
+        if row:
+            companies.append((row[1], row[0], row[2]))
+        else:
+            print(f'Warning: No IS data for {ticker}')
+else:
+    # Use predefined groups
+    if args.group == 'general':
+        cik_list = GENERAL_COMPANIES
+    elif args.group == 'financial':
+        cik_list = FINANCIAL_COMPANIES
+    else:
+        cik_list = GENERAL_COMPANIES + FINANCIAL_COMPANIES
+
+    for cik in cik_list:
+        cursor.execute('''
+            SELECT f.adsh, f.company_name
+            FROM filings f
+            WHERE f.cik = %s
+              AND EXISTS (
+                  SELECT 1 FROM edgar_pre ep
+                  WHERE ep.adsh = f.adsh
+                    AND ep.source_year = %s
+                    AND ep.source_quarter = %s
+                    AND ep.stmt = 'IS'
+              )
+            LIMIT 1
+        ''', (str(cik), args.year, args.quarter))
+        row = cursor.fetchone()
+        if row:
+            companies.append((row[0], cik, row[1]))
 
 conn.close()
 print(f'Found {len(companies)} companies with IS data')
 
-reconstructor = StatementReconstructor(year=2024, quarter=2, verbose=False)
+reconstructor = StatementReconstructor(year=args.year, quarter=args.quarter, verbose=False)
 
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 output_file = config.storage.reports_dir / f'is_structure_analysis_{timestamp}.txt'
@@ -79,9 +127,9 @@ with open(output_file, 'w', encoding='utf-8') as f:
             continue
 
         f.write(f'\nALL LINE ITEMS ({len(result["line_items"])} items):\n')
-        f.write("-"*90 + "\n")
-        f.write(f'{"Ln":>3} {"Label":<55} {"is_sum":>6} {"parent":>6} {"#child":>6}\n')
-        f.write("-"*90 + "\n")
+        f.write("-"*100 + "\n")
+        f.write(f'{"Ln":>3} {"Label":<50} {"CRDR":>4} {"is_sum":>6} {"parent":>6} {"#child":>6}\n')
+        f.write("-"*100 + "\n")
 
         root_items = []
         for item in result['line_items']:
@@ -89,10 +137,11 @@ with open(output_file, 'w', encoding='utf-8') as f:
             is_sum = item.get('is_sum', False)
             parent = item.get('parent_line')
             children = len(item.get('calc_children', []))
-            plabel = (item.get('plabel', '') or '')[:55]
+            plabel = (item.get('plabel', '') or '')[:50]
+            crdr = item.get('crdr') or '-'
 
             parent_str = str(parent) if parent else 'ROOT'
-            f.write(f'{ln:3} {plabel:<55} {str(is_sum):>6} {parent_str:>6} {children:>6}\n')
+            f.write(f'{ln:3} {plabel:<50} {crdr:>4} {str(is_sum):>6} {parent_str:>6} {children:>6}\n')
 
             if parent is None:
                 root_items.append((ln, plabel, is_sum))

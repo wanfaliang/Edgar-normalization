@@ -852,8 +852,8 @@ def find_is_control_items(line_items):
         # 2. operating_income (CSV line 69)
         # Pattern: [(contains 'operating' or contains 'operation' or contains 'continuing') and (contains 'income' or contains 'loss' or contains 'profit' or contains 'earnings')]
         if 'operating_income' not in control_lines:
-            if ('operating' in p or 'operation' in p or 'continuing' in p) and \
-               ('income' in p or 'loss' in p or 'profit' in p or 'earnings' in p):
+            if (('operating' in p or 'operation' in p or 'continuing' in p) and \
+               ('income' in p or 'loss' in p or 'profit' in p or 'earnings' in p)) and ('other' not in p):
                 control_lines['operating_income'] = line_num
 
         # 3. income_tax_expense (CSV line 72) - REQUIRED
@@ -996,7 +996,7 @@ def map_is_item(plabel, line_num, control_lines, datatype=None):
         return 'operating_income'
 
     # CSV line 64: Interest income
-    if 'interest' in p and 'income' in p:
+    if ('interest' in p and 'income' in p) and ('controlling' not in p and 'non controlling' not in p and 'noncontrolling' not in p and 'minority' not in p):
         return 'interest_income'
 
     # CSV line 65: Interest expense
